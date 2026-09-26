@@ -1,5 +1,7 @@
 # Real Metrics Holdings
 
+Management and advertising website for Real Metrics Holdings.
+
 Professional React website and browser CMS for Real Metrics Holdings real estate advertising.
 
 ## Local setup
