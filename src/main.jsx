@@ -60,15 +60,9 @@ const editorialSlides = [
 ];
 
 const serviceDetails = [
-  { image: 'https://images.unsplash.com/photo-1691425700585-c108acad6467?auto=format&fit=crop&w=1600&q=78', kicker: 'Campaign strategy', features: ['Listing brief and audience positioning', 'Clear property copy and key selling points', 'Sale, rental, tenancy, and development campaigns'] },
-  { image: 'https://images.unsplash.com/photo-1627141234469-24711efb373c?auto=format&fit=crop&w=1600&q=78', kicker: 'Visual presentation', features: ['Image selection and gallery sequencing', 'Mobile-ready property showcase pages', 'Consistent status, pricing, and feature information'] },
-  { image: 'https://images.unsplash.com/photo-1633354747567-e0682586f082?auto=format&fit=crop&w=1600&q=78', kicker: 'Market readiness', features: ['Human review before publication', 'Qualified enquiry capture and follow-up', 'Content updates as property status changes'] },
-];
-
-const serviceSlides = [
-  { image: publicAsset('images/services-home-exterior.jpg'), alt: 'Contemporary residence with landscaped gardens' },
-  { image: publicAsset('images/services-home-interior.jpg'), alt: 'Refined modern residential living room' },
-  { image: publicAsset('images/services-apartments.jpg'), alt: 'Contemporary residential apartment building' },
+  { image: publicAsset('images/service-listing-campaign.jpg'), kicker: 'Campaign strategy', features: ['Listing brief and audience positioning', 'Clear property copy and key selling points', 'Sale, rental, tenancy, and development campaigns'] },
+  { image: publicAsset('images/service-showcase-pages.jpg'), kicker: 'Visual presentation', features: ['Image selection and gallery sequencing', 'Mobile-ready property showcase pages', 'Consistent status, pricing, and feature information'] },
+  { image: publicAsset('images/service-market-presentation.jpg'), kicker: 'Market readiness', features: ['Human review before publication', 'Qualified enquiry capture and follow-up', 'Content updates as property status changes'] },
 ];
 
 const aboutSlides = [
@@ -177,7 +171,6 @@ function ServicesPage({ services, navigate }) {
   return <main>
     <PageIntro eyebrow="Our services" title="Property marketing, handled with care." copy="From first brief to published campaign, we make each listing clear, attractive, and easy to act on." image={pageImages.services} />
     <section className="services-intro section"><div><p className="eyebrow">Complete listing support</p><h2>Every stage of the property story, brought together.</h2></div><p>We combine practical property information, considered visual direction, and a clear route to enquiry. Owners, landlords, agents, and developers get one organised workflow from submission to publication.</p></section>
-    <section className="page-slider-section"><SilentImageSlider images={serviceSlides} label="Housing presentation slideshow" /></section>
     <section className="service-showcases">{services.map((service, index) => { const detail = serviceDetails[index % serviceDetails.length]; return <article className="service-showcase reveal" key={service.id}><div className="service-showcase-image"><img src={detail.image} alt={`${service.title} service`} loading="lazy" decoding="async" /><span>0{index + 1}</span></div><div className="service-showcase-copy"><div className="service-icon">{serviceIcon(service.icon)}</div><p className="eyebrow">{detail.kicker}</p><h2>{service.title}</h2><p>{service.description}</p><ul>{detail.features.map((feature) => <li key={feature}><Check size={17} />{feature}</li>)}</ul></div></article>; })}</section>
     <section className="process-band"><div className="section-heading reveal"><p className="eyebrow light">Our approach</p><h2>Simple from brief to enquiry.</h2></div><div className="process-grid"><div className="reveal"><strong>01</strong><h3>Share the property</h3><p>Send the details, images, location, price, and availability.</p></div><div className="reveal"><strong>02</strong><h3>We shape the advert</h3><p>We organise the story and present the property with clarity.</p></div><div className="reveal"><strong>03</strong><h3>Reach the market</h3><p>Your campaign goes live with direct paths for serious enquiries.</p></div></div></section>
     <section className="service-assurance section"><div className="section-heading reveal"><p className="eyebrow">Built for confidence</p><h2>Clear information. Human review. Better enquiries.</h2></div><div className="assurance-grid"><article><ShieldCheck /><h3>Reviewed before publishing</h3><p>Every owner-submitted listing enters a private approval queue before it can appear publicly.</p></article><article><ImagePlus /><h3>Gallery-first presentation</h3><p>Images are arranged into responsive slideshows so visitors can explore every property properly.</p></article><article><Mail /><h3>Enquiries stay connected</h3><p>Property context and visitor contact details reach the admin inbox together for useful follow-up.</p></article></div></section>
