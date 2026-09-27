@@ -449,7 +449,21 @@ function App() {
   const [liveEditing] = useState(() => new URLSearchParams(window.location.search).get('edit') === '1');
   const [liveAuthorized, setLiveAuthorized] = useState(false);
   const [editor, setEditor] = useState(null);
-  useEffect(() => { loadCmsData().then(setData); }, []);
+  useEffect(() => {
+    let active = true;
+    const refresh = () => loadCmsData().then((next) => { if (active) setData(next); });
+    refresh();
+    const refreshWhenVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    window.addEventListener('focus', refresh);
+    window.addEventListener('storage', refresh);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('storage', refresh);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, []);
   useEffect(() => {
     const page = seoPages[path] || notFoundSeo;
     const canonicalPath = page.noindex ? '/' : path;

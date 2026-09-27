@@ -25,7 +25,8 @@ const readLocal = () => readCached() || seed;
 
 const writeLocal = (data) => {
   try {
-    window.localStorage.setItem(localKey, JSON.stringify(data));
+    const serialized = JSON.stringify(data);
+    if (window.localStorage.getItem(localKey) !== serialized) window.localStorage.setItem(localKey, serialized);
   } catch {
     // The live data still works when storage is unavailable.
   }
@@ -48,9 +49,9 @@ export async function loadCmsData() {
 
   const data = {
     settings: { ...defaultSettings, ...(settingsResult.data || {}) },
-    properties: propertiesResult.data?.length ? propertiesResult.data : defaultProperties,
-    services: servicesResult.data?.length ? ordered(servicesResult.data) : defaultServices,
-    testimonials: testimonialsResult.data?.length ? ordered(testimonialsResult.data) : defaultTestimonials,
+    properties: propertiesResult.data ?? defaultProperties,
+    services: servicesResult.data ? ordered(servicesResult.data) : defaultServices,
+    testimonials: testimonialsResult.data ? ordered(testimonialsResult.data) : defaultTestimonials,
   };
   writeLocal(data);
   return data;
