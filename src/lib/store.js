@@ -100,3 +100,16 @@ export async function saveCmsData(data) {
   writeLocal(data);
   return data;
 }
+
+export async function deleteCmsItem(collection, id, nextData) {
+  const table = tables[collection];
+  if (!table) throw new Error('This content type cannot be deleted.');
+
+  if (hasSupabase) {
+    const { error } = await supabase.from(table).delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  writeLocal(nextData);
+  return nextData;
+}

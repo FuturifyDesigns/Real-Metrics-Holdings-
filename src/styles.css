@@ -60,6 +60,9 @@ h1,h2 { font-family:Georgia,'Times New Roman',serif; font-weight:700; letter-spa
 .section-heading h2,.editorial-copy h2,.cta-band h2,.contact-details h2,.about-statement h2,.process-band h2 { margin:0; font-size:clamp(2rem,3.5vw,3.75rem); line-height:1.12; }
 .section-heading>p:not(.eyebrow),.editorial-copy>p,.contact-details>p,.about-body p,.service-row p { color:var(--muted); line-height:1.75; }
 .property-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; }
+.properties-coming-soon { width:min(760px,100%); margin:20px auto 0; padding:clamp(34px,6vw,68px); text-align:center; border:1px solid var(--line); border-radius:8px; background:var(--soft); }
+.properties-coming-soon h2,.properties-coming-soon h3 { margin:0 0 12px; font-family:Georgia,'Times New Roman',serif; font-size:clamp(1.7rem,3vw,2.65rem); }
+.properties-coming-soon p { max-width:600px; margin:0 auto; color:var(--muted); line-height:1.7; }
 .property-card { position:relative; height:100%; display:flex; flex-direction:column; background:var(--white); border:1px solid #dedbd6; border-radius:14px; overflow:hidden; box-shadow:0 9px 28px rgba(17,17,19,.055); transition:transform .35s ease,box-shadow .35s ease,border-color .35s ease; }
 .property-card::after { content:""; position:absolute; inset:auto 0 0; height:4px; background:linear-gradient(90deg,var(--red),#ed5960); transform:scaleX(0); transform-origin:left; transition:transform .35s ease; }
 .property-card:hover { transform:translateY(-7px); border-color:#cac6c0; box-shadow:0 24px 58px rgba(17,17,19,.14); }

@@ -7,7 +7,7 @@ import {
 import { Admin } from './components/Admin';
 import { PropertyCard } from './components/PropertyCard';
 import { PropertySubmissionPage } from './components/PropertySubmission';
-import { initialCmsData, loadCmsData, saveCmsData } from './lib/store';
+import { deleteCmsItem, initialCmsData, loadCmsData, saveCmsData } from './lib/store';
 import { hasSupabase, supabase } from './lib/supabase';
 import './styles.css';
 
@@ -161,8 +161,7 @@ function HomePage({ data, navigate, editMode = false, onEdit }) {
     <HeroSlider navigate={navigate} settings={data.settings} editMode={editMode} onEdit={onEdit} />
     <section className="section home-listings">
       <div className="section-heading reveal"><p className="eyebrow">Selected properties</p><h2>Worth a closer look.</h2><p>Browse current homes, rentals, and commercial opportunities presented by Real Metrics Holdings.</p></div>
-      <div className="property-grid home-grid">{properties.map((property) => <PropertyCard key={property.id} property={property} detailHref={`${basePath}/properties/${property.id}`} contactHref={`${basePath}/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate} editMode={editMode} onEdit={onEdit} />)}</div>
-      <div className="section-action reveal"><Link className="text-link" to="/properties" onNavigate={navigate}>See all properties <ArrowRight size={17} /></Link></div>
+      {properties.length ? <><div className="property-grid home-grid">{properties.map((property) => <PropertyCard key={property.id} property={property} detailHref={`${basePath}/properties/${property.id}`} contactHref={`${basePath}/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate} editMode={editMode} onEdit={onEdit} />)}</div><div className="section-action reveal"><Link className="text-link" to="/properties" onNavigate={navigate}>See all properties <ArrowRight size={17} /></Link></div></> : <div className="properties-coming-soon reveal"><h3>New properties coming soon.</h3><p>We are preparing our next selection of homes, rentals, and commercial opportunities for publication.</p></div>}
     </section>
     <section className="editorial-split">
       <EditorialSlider />
@@ -180,7 +179,7 @@ function PropertiesPage({ properties, navigate, editMode = false, onEdit }) {
   const visible = filter === 'All' ? properties : properties.filter((property) => property.status === filter);
   return <main>
     <PageIntro eyebrow="Properties" title="Find the right place." copy="Explore properties for sale and rent, along with recently completed campaigns." image={pageImages.properties} />
-    <section className="section"><div className="filter-bar" aria-label="Filter properties by status">{filters.map((item) => <button className={filter === item ? 'active' : ''} type="button" key={item} onClick={() => setFilter(item)}>{item}</button>)}</div>{visible.length ? <div className="property-grid">{visible.map((property) => <PropertyCard key={property.id} property={property} detailHref={`${basePath}/properties/${property.id}`} contactHref={`${basePath}/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate} editMode={editMode} onEdit={onEdit} />)}</div> : <p className="empty-state">No properties match this status yet.</p>}</section>
+    <section className="section">{properties.length ? <><div className="filter-bar" aria-label="Filter properties by status">{filters.map((item) => <button className={filter === item ? 'active' : ''} type="button" key={item} onClick={() => setFilter(item)}>{item}</button>)}</div>{visible.length ? <div className="property-grid">{visible.map((property) => <PropertyCard key={property.id} property={property} detailHref={`${basePath}/properties/${property.id}`} contactHref={`${basePath}/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate} editMode={editMode} onEdit={onEdit} />)}</div> : <p className="empty-state">No properties match this status yet.</p>}</> : <div className="properties-coming-soon"><h2>Properties will be available soon.</h2><p>Our next selection of homes, rentals, and commercial opportunities is being prepared for publication.</p></div>}</section>
   </main>;
 }
 
@@ -451,19 +450,38 @@ function App() {
   const [editor, setEditor] = useState(null);
   useEffect(() => {
     let active = true;
+    loadCmsData().then((next) => { if (active) setData(next); });
+    return () => { active = false; };
+  }, []);
+  useEffect(() => {
+    if (!hasSupabase || path === '/admin') return undefined;
+    let active = true;
+    let refreshTimer;
     const refresh = () => loadCmsData().then((next) => { if (active) setData(next); });
-    refresh();
+    const scheduleRefresh = () => {
+      window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(refresh, 150);
+    };
+    const channel = supabase.channel('public-cms-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_settings' }, scheduleRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, scheduleRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, scheduleRefresh)
+      .subscribe();
+    const fallback = window.setInterval(refresh, 15000);
     const refreshWhenVisible = () => { if (document.visibilityState === 'visible') refresh(); };
     window.addEventListener('focus', refresh);
-    window.addEventListener('storage', refresh);
+    window.addEventListener('storage', scheduleRefresh);
     document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
       active = false;
+      window.clearTimeout(refreshTimer);
+      window.clearInterval(fallback);
       window.removeEventListener('focus', refresh);
-      window.removeEventListener('storage', refresh);
+      window.removeEventListener('storage', scheduleRefresh);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
+      supabase.removeChannel(channel);
     };
-  }, []);
+  }, [path]);
   useEffect(() => {
     const page = seoPages[path] || notFoundSeo;
     const canonicalPath = page.noindex ? '/' : path;
@@ -503,7 +521,7 @@ function App() {
   const commitLiveChange = async (next) => { await saveCmsData(next); setData(next); setEditor(null); };
   const page = useMemo(() => {
     if (!data) return null;
-    if (path === '/admin') return <Admin data={data} setData={setData} onSave={saveCmsData} />;
+    if (path === '/admin') return <Admin data={data} setData={setData} onSave={saveCmsData} onDelete={deleteCmsItem} />;
     if (path === '/properties') return <PropertiesPage properties={data.properties} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
     if (path.startsWith('/properties/')) {
       let propertyId = '';

@@ -10,7 +10,7 @@ const blankProperty = () => ({
 });
 const blankService = () => ({ id: crypto.randomUUID(), title: 'New service', description: '', icon: 'megaphone', sort_order: 99 });
 
-export function Admin({ data, setData, onSave }) {
+export function Admin({ data, setData, onSave, onDelete }) {
   const [email, setEmail] = useState(adminEmail);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -37,24 +37,46 @@ export function Admin({ data, setData, onSave }) {
   }, []);
 
   useEffect(() => {
-    if (!session || session.user.email?.toLowerCase() !== adminEmail) return;
-    supabase.from('property_submissions').select('*').order('created_at', { ascending: false }).then(async ({ data: rows, error }) => {
-      if (error) setMessage(error.message);
+    if (!session || session.user.email?.toLowerCase() !== adminEmail) return undefined;
+    let active = true;
+    let refreshTimer;
+    const loadQueues = async () => {
+      const [submissionResult, inquiryResult] = await Promise.all([
+        supabase.from('property_submissions').select('*').order('created_at', { ascending: false }),
+        supabase.from('contact_inquiries').select('*').order('created_at', { ascending: false }),
+      ]);
+      if (!active) return;
+      if (submissionResult.error) setMessage(submissionResult.error.message);
       else {
-        const nextRows = rows || [];
+        const nextRows = submissionResult.data || [];
         setSubmissions(nextRows);
         const paths = nextRows.flatMap((item) => item.images || []);
         if (paths.length) {
           const { data: signed, error: imageError } = await supabase.storage.from('property-submissions').createSignedUrls(paths, 3600);
+          if (!active) return;
           if (imageError) setMessage(imageError.message);
           else setReviewImages(Object.fromEntries((signed || []).filter((item) => item.signedUrl).map((item) => [item.path, item.signedUrl])));
-        }
+        } else setReviewImages({});
       }
-    });
-    supabase.from('contact_inquiries').select('*').order('created_at', { ascending: false }).then(({ data: rows, error }) => {
-      if (error) setMessage(error.message);
-      else setInquiries(rows || []);
-    });
+      if (inquiryResult.error) setMessage(inquiryResult.error.message);
+      else setInquiries(inquiryResult.data || []);
+    };
+    const scheduleRefresh = () => {
+      window.clearTimeout(refreshTimer);
+      refreshTimer = window.setTimeout(loadQueues, 150);
+    };
+    loadQueues();
+    const channel = supabase.channel('admin-requests-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'property_submissions' }, scheduleRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contact_inquiries' }, scheduleRefresh)
+      .subscribe();
+    const fallback = window.setInterval(loadQueues, 10000);
+    return () => {
+      active = false;
+      window.clearTimeout(refreshTimer);
+      window.clearInterval(fallback);
+      supabase.removeChannel(channel);
+    };
   }, [session]);
 
   const login = async (event) => {
@@ -75,7 +97,7 @@ export function Admin({ data, setData, onSave }) {
     setSaving(true);
     setMessage('');
     try {
-      await onSave(next);
+      await onDelete(collection, id, next);
       if (collection === 'properties') setEditingProperty('');
       setMessage(collection === 'properties' ? 'Property removed from the live website.' : 'Item removed and published.');
     } catch (error) {
