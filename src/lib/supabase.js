@@ -11,4 +11,5 @@ export const tables = {
   properties: 'properties',
   services: 'services',
   testimonials: 'testimonials',
+  submissions: 'property_submissions',
 };

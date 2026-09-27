@@ -29,8 +29,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: https://wrfxqvrazdepzbrnilvu.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZnhxdnJhemRlcHpicm5pbHZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0NDk2NTYsImV4cCI6MjEwNjAyNTY1Nn0.pzfPCEeFNXpyJ7spOlD6PdypuxgluDzKpEiVBQyv2Ug
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
