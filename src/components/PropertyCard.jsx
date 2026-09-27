@@ -3,17 +3,26 @@ import { useState } from 'react';
 
 const statusClass = (status) => `status status-${String(status).toLowerCase().replaceAll(' ', '-')}`;
 
-export function PropertyCard({ property, contactHref = '/contact' }) {
+export function PropertyCard({ property, contactHref = '/contact', detailHref, onNavigate }) {
   const [imageIndex, setImageIndex] = useState(0);
   const images = property.images?.length ? property.images : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1400&q=85'];
 
   const next = () => setImageIndex((current) => (current + 1) % images.length);
   const prev = () => setImageIndex((current) => (current - 1 + images.length) % images.length);
+  const follow = (event, href) => {
+    if (!onNavigate || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    window.history.pushState({}, '', href);
+    const url = new URL(href, window.location.origin);
+    const appBase = import.meta.env.BASE_URL.replace(/\/$/, '');
+    onNavigate(url.pathname.startsWith(appBase) ? url.pathname.slice(appBase.length) || '/' : url.pathname);
+  };
 
   return (
     <article className="property-card reveal">
       <div className="property-media">
         <img src={images[imageIndex]} alt={property.title} />
+        <a className="property-media-link" href={detailHref} onClick={(event) => follow(event, detailHref)} aria-label={`View full details for ${property.title}`} />
         <span className={statusClass(property.status)}>{property.status}</span>
         {property.featured && <span className="featured-pill">Featured</span>}
         {images.length > 1 && (
@@ -26,7 +35,7 @@ export function PropertyCard({ property, contactHref = '/contact' }) {
       <div className="property-body">
         <div>
           <p className="eyebrow">{property.category}</p>
-          <h3>{property.title}</h3>
+          <h3><a href={detailHref} onClick={(event) => follow(event, detailHref)}>{property.title}</a></h3>
           <p className="location"><MapPin size={15} />{property.location}</p>
         </div>
         <p className="property-description">{property.description}</p>
@@ -37,7 +46,7 @@ export function PropertyCard({ property, contactHref = '/contact' }) {
         </div>
         <div className="property-footer">
           <strong>{property.price}</strong>
-          <a href={contactHref} aria-label={`Ask about ${property.title}`}>Enquire <MoveUpRight size={16} /></a>
+          <a href={contactHref} onClick={(event) => follow(event, contactHref)} aria-label={`Ask about ${property.title}`}>Enquire <MoveUpRight size={16} /></a>
         </div>
       </div>
     </article>

@@ -3,13 +3,14 @@ import { createRoot } from 'react-dom/client';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
-  ArrowRight, Building2, ChartNoAxesCombined, Check, ChevronLeft, ChevronRight,
-  Mail, MapPin, Megaphone, Menu, Phone, Send, ShieldCheck, X,
+  ArrowRight, Bath, BedDouble, Building2, ChartNoAxesCombined, Check, ChevronLeft, ChevronRight,
+  Mail, MapPin, Megaphone, Menu, Phone, Ruler, Send, ShieldCheck, X,
 } from 'lucide-react';
 import { Admin } from './components/Admin';
 import { PropertyCard } from './components/PropertyCard';
 import { PropertySubmissionPage } from './components/PropertySubmission';
 import { loadCmsData, saveCmsData } from './lib/store';
+import { hasSupabase, supabase, tables } from './lib/supabase';
 import './styles.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -22,7 +23,7 @@ function currentPath() {
   const pathname = window.location.pathname;
   const stripped = basePath && pathname.startsWith(basePath) ? pathname.slice(basePath.length) : pathname;
   const normalized = `/${stripped.replace(/^\/+|\/+$/g, '')}`;
-  return normalized === '/' || routes.includes(normalized) ? normalized : '/';
+  return normalized === '/' || routes.includes(normalized) || normalized.startsWith('/properties/') ? normalized : '/';
 }
 
 function Link({ to, onNavigate, children, className = '', ...props }) {
@@ -31,7 +32,7 @@ function Link({ to, onNavigate, children, className = '', ...props }) {
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     window.history.pushState({}, '', href);
-    onNavigate(to);
+    onNavigate(to.split('?')[0]);
   }}>{children}</a>;
 }
 
@@ -57,7 +58,6 @@ function HeroSlider({ navigate, settings }) {
     const timer = window.setInterval(() => setActive((value) => (value + 1) % heroSlides.length), 6500);
     return () => window.clearInterval(timer);
   }, []);
-  const changeSlide = (direction) => setActive((value) => (value + direction + heroSlides.length) % heroSlides.length);
   const slides = heroSlides.map((slide, index) => index === 0 ? { ...slide, title: settings.hero_title, copy: settings.hero_subtitle } : slide);
   return (
     <section className="hero" aria-roledescription="carousel">
@@ -71,10 +71,6 @@ function HeroSlider({ navigate, settings }) {
           <Link className="primary-button" to="/properties" onNavigate={navigate}>View properties <ArrowRight size={18} /></Link>
           <Link className="ghost-button" to="/list-property" onNavigate={navigate}>List a property</Link>
         </div>
-      </div>
-      <div className="hero-controls">
-        <button type="button" onClick={() => changeSlide(-1)} aria-label="Previous slide"><ChevronLeft /></button>
-        <button type="button" onClick={() => changeSlide(1)} aria-label="Next slide"><ChevronRight /></button>
       </div>
     </section>
   );
@@ -91,7 +87,7 @@ function HomePage({ data, navigate }) {
     <HeroSlider navigate={navigate} settings={data.settings} />
     <section className="section home-listings">
       <div className="section-heading reveal"><p className="eyebrow">Selected properties</p><h2>Worth a closer look.</h2><p>Browse current homes, rentals, and commercial opportunities presented by Real Metrics Holdings.</p></div>
-      <div className="property-grid home-grid">{properties.map((property) => <PropertyCard key={property.id} property={property} contactHref={`${basePath}/contact`} />)}</div>
+      <div className="property-grid home-grid">{properties.map((property) => <PropertyCard key={property.id} property={property} detailHref={`${basePath}/properties/${property.id}`} contactHref={`${basePath}/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate} />)}</div>
       <div className="section-action reveal"><Link className="text-link" to="/properties" onNavigate={navigate}>See all properties <ArrowRight size={17} /></Link></div>
     </section>
     <section className="editorial-split">
@@ -102,13 +98,27 @@ function HomePage({ data, navigate }) {
   </main>;
 }
 
-function PropertiesPage({ properties }) {
+function PropertiesPage({ properties, navigate }) {
   const [filter, setFilter] = useState('All');
   const filters = ['All', 'For Sale', 'For Rent', 'Available', 'Sold', 'Rented', 'Tenanted'];
   const visible = filter === 'All' ? properties : properties.filter((property) => property.status === filter);
   return <main>
     <PageIntro eyebrow="Properties" title="Find the right place." copy="Explore properties for sale and rent, along with recently completed campaigns." image={pageImages.properties} />
-    <section className="section"><div className="filter-bar" aria-label="Filter properties by status">{filters.map((item) => <button className={filter === item ? 'active' : ''} type="button" key={item} onClick={() => setFilter(item)}>{item}</button>)}</div>{visible.length ? <div className="property-grid">{visible.map((property) => <PropertyCard key={property.id} property={property} contactHref={`${basePath}/contact`} />)}</div> : <p className="empty-state">No properties match this status yet.</p>}</section>
+    <section className="section"><div className="filter-bar" aria-label="Filter properties by status">{filters.map((item) => <button className={filter === item ? 'active' : ''} type="button" key={item} onClick={() => setFilter(item)}>{item}</button>)}</div>{visible.length ? <div className="property-grid">{visible.map((property) => <PropertyCard key={property.id} property={property} detailHref={`${basePath}/properties/${property.id}`} contactHref={`${basePath}/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate} />)}</div> : <p className="empty-state">No properties match this status yet.</p>}</section>
+  </main>;
+}
+
+function PropertyDetailsPage({ property, navigate }) {
+  const [activeImage, setActiveImage] = useState(0);
+  const images = property.images?.length ? property.images : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=88'];
+  const showPrevious = () => setActiveImage((current) => (current - 1 + images.length) % images.length);
+  const showNext = () => setActiveImage((current) => (current + 1) % images.length);
+  return <main className="property-details-page">
+    <section className="property-gallery">
+      <div className="property-gallery-main"><img src={images[activeImage]} alt={`${property.title} view ${activeImage + 1}`} />{images.length > 1 && <div className="property-gallery-controls"><button type="button" onClick={showPrevious} aria-label="Previous property image"><ChevronLeft /></button><span>{activeImage + 1} / {images.length}</span><button type="button" onClick={showNext} aria-label="Next property image"><ChevronRight /></button></div>}</div>
+      {images.length > 1 && <div className="property-thumbnails" aria-label="Property image gallery">{images.map((image, index) => <button type="button" className={index === activeImage ? 'active' : ''} onClick={() => setActiveImage(index)} key={image}><img src={image} alt={`Show ${property.title} image ${index + 1}`} /></button>)}</div>}
+    </section>
+    <section className="property-details section"><div className="property-details-copy"><Link className="back-link" to="/properties" onNavigate={navigate}>← Back to properties</Link><p className="eyebrow">{property.category}</p><h1>{property.title}</h1><p className="property-detail-location"><MapPin />{property.location}</p><p className="property-detail-description">{property.description}</p><div className="property-detail-meta"><span><BedDouble /> <strong>{property.beds || 'Studio'}</strong> Bedrooms</span><span><Bath /> <strong>{property.baths}</strong> Bathrooms</span><span><Ruler /> <strong>{property.size || 'Not specified'}</strong> Size</span></div></div><aside className="property-enquiry-card"><span className={`status status-${String(property.status).toLowerCase().replaceAll(' ', '-')}`}>{property.status}</span><p>Asking price</p><strong>{property.price}</strong><p>Interested in this property? Send the full listing details with your enquiry.</p><Link className="primary-button" to={`/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate}>Enquire about this property <ArrowRight /></Link></aside></section>
   </main>;
 }
 
@@ -132,23 +142,47 @@ function AboutPage({ settings, testimonials }) {
   </main>;
 }
 
-function ContactPage({ settings }) {
-  const submit = (event) => {
+function ContactPage({ settings, property }) {
+  const [submitting, setSubmitting] = useState(false);
+  const [formMessage, setFormMessage] = useState('');
+  const propertySummary = property ? `${property.title} — ${property.location} — ${property.price}\nStatus: ${property.status}\nCategory: ${property.category}\nBedrooms: ${property.beds || 'Studio'}\nBathrooms: ${property.baths}\nSize: ${property.size || 'Not specified'}\n\n${property.description}` : '';
+  const submit = async (event) => {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const subject = encodeURIComponent(`${form.get('inquiry_type')} from ${form.get('name')}`);
-    const body = encodeURIComponent(`Name: ${form.get('name')}\nEmail: ${form.get('email')}\nPhone: ${form.get('phone')}\nInquiry: ${form.get('inquiry_type')}\n\n${form.get('message')}`);
-    window.location.href = `mailto:${settings.email}?subject=${subject}&body=${body}`;
+    setSubmitting(true); setFormMessage('');
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const inquiry = {
+      name: String(form.get('name')).trim(),
+      email: String(form.get('email')).trim().toLowerCase(),
+      phone: String(form.get('phone')).trim(),
+      inquiry_type: String(form.get('inquiry_type')),
+      property_id: property && /^[0-9a-f-]{36}$/i.test(property.id) ? property.id : null,
+      property_title: property?.title || '',
+      message: String(form.get('message')).trim(),
+      status: 'new',
+    };
+    try {
+      if (!hasSupabase) throw new Error('Online enquiries are temporarily unavailable. Please email us directly.');
+      const { error } = await supabase.from(tables.inquiries).insert(inquiry);
+      if (error) throw error;
+      setFormMessage('Your enquiry has been saved. Your email application is opening with the details ready to send.');
+      const subject = encodeURIComponent(`${inquiry.inquiry_type}${property ? `: ${property.title}` : ''} from ${inquiry.name}`);
+      const body = encodeURIComponent(`Name: ${inquiry.name}\nEmail: ${inquiry.email}\nPhone: ${inquiry.phone}\nInquiry: ${inquiry.inquiry_type}${propertySummary ? `\n\nProperty details:\n${propertySummary}` : ''}\n\nMessage:\n${inquiry.message}`);
+      window.location.href = `mailto:${settings.email}?subject=${subject}&body=${body}`;
+      formElement.reset();
+    } catch (error) {
+      setFormMessage(error.message || 'We could not save your enquiry. Please try again.');
+    } finally { setSubmitting(false); }
   };
   return <main>
     <PageIntro eyebrow="Contact" title="Let's talk property." copy={settings.contact_intro} image={pageImages.contact} />
-    <section className="contact-page section"><div className="contact-details reveal"><p className="eyebrow">Get in touch</p><h2>How can we help?</h2><p>For property submissions, use our dedicated listing form. For general enquiries, partnerships, or support, send us a message here.</p><a href={`mailto:${settings.email}`}><Mail /><span><small>Email</small>{settings.email}</span></a><a href={`tel:${settings.phone.replaceAll(' ', '')}`}><Phone /><span><small>Phone</small>{settings.phone}</span></a><div className="contact-location"><MapPin /><span><small>Location</small>{settings.address}</span></div></div><form className="contact-form reveal" onSubmit={submit}><label>Your name *<input name="name" autoComplete="name" minLength="2" maxLength="80" required /></label><label>Email address *<input name="email" type="email" autoComplete="email" maxLength="120" required /></label><label>Phone number *<input name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[+0-9][0-9 ()-]{6,19}" title="Enter a valid phone number using digits, spaces, brackets, + or -." required /></label><label>Inquiry type *<select name="inquiry_type" defaultValue="" required><option value="" disabled>Select one</option><option>General enquiry</option><option>Property search</option><option>Partnership</option><option>Website support</option></select></label><label className="wide">How can we help? *<textarea name="message" rows="6" minLength="20" maxLength="1500" required /></label><button className="primary-button" type="submit">Send enquiry <Send size={17} /></button></form></section>
+    <section className="contact-page section"><div className="contact-details reveal"><p className="eyebrow">Get in touch</p><h2>{property ? `Enquire about ${property.title}` : 'How can we help?'}</h2><p>{property ? 'The property details have been added to your enquiry. Enter your contact information and a personal message so our team can respond.' : 'For property submissions, use our dedicated listing form. For general enquiries, partnerships, or support, send us a message here.'}</p><a href={`mailto:${settings.email}`}><Mail /><span><small>Email</small>{settings.email}</span></a><a href={`tel:${settings.phone.replaceAll(' ', '')}`}><Phone /><span><small>Phone</small>{settings.phone}</span></a><div className="contact-location"><MapPin /><span><small>Location</small>{settings.address}</span></div></div><form className="contact-form reveal" onSubmit={submit}>{property && <label className="wide">Selected property details<textarea className="readonly-details" value={propertySummary} rows="7" readOnly /></label>}<label>Your name *<input name="name" autoComplete="name" minLength="2" maxLength="80" required /></label><label>Email address *<input name="email" type="email" autoComplete="email" maxLength="120" required /></label><label>Phone number *<input name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[+0-9][0-9 ()-]{6,19}" title="Enter a valid phone number using digits, spaces, brackets, + or -." required /></label><label>Inquiry type *<select name="inquiry_type" defaultValue={property ? 'Property enquiry' : ''} required><option value="" disabled>Select one</option><option>Property enquiry</option><option>General enquiry</option><option>Property search</option><option>Partnership</option><option>Website support</option></select></label><label className="wide">How can we help? *<textarea name="message" rows="7" minLength="20" maxLength="1500" defaultValue={property ? `I am interested in ${property.title} in ${property.location}. Please contact me with more information and the next steps.` : ''} required /></label><button className="primary-button" type="submit" disabled={submitting}>{submitting ? 'Saving enquiry…' : 'Send enquiry'} <Send size={17} /></button>{formMessage && <p className="contact-form-message wide" role="status">{formMessage}</p>}</form></section>
   </main>;
 }
 
 function Header({ path, navigate }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const links = [['/', 'Home'], ['/properties', 'Properties'], ['/services', 'Services'], ['/about', 'About'], ['/contact', 'Contact'], ['/list-property', 'List a property']];
+  const links = [['/', 'Home'], ['/properties', 'Properties'], ['/services', 'Services'], ['/about', 'About'], ['/contact', 'Contact']];
   return <header className="site-header"><Link className="brand" to="/" onNavigate={navigate} aria-label="Real Metrics Holdings home"><img src={publicAsset('real-metrics-logo-transparent.png')} alt="Real Metrics Holdings" /></Link><nav className={`nav ${menuOpen ? 'open' : ''}`} aria-label="Primary navigation">{links.map(([to, label]) => <Link key={to} className={path === to ? 'active' : ''} to={to} onNavigate={(next) => { setMenuOpen(false); navigate(next); }}>{label}</Link>)}</nav><Link className="header-cta" to="/list-property" onNavigate={navigate}>List your property <ArrowRight size={16} /></Link><button className="menu-button" type="button" onClick={() => setMenuOpen((current) => !current)} aria-label="Toggle menu">{menuOpen ? <X /> : <Menu />}</button></header>;
 }
 
@@ -171,10 +205,18 @@ function App() {
   const page = useMemo(() => {
     if (!data) return null;
     if (path === '/admin') return <Admin data={data} setData={setData} onSave={saveCmsData} />;
-    if (path === '/properties') return <PropertiesPage properties={data.properties} />;
+    if (path === '/properties') return <PropertiesPage properties={data.properties} navigate={navigate} />;
+    if (path.startsWith('/properties/')) {
+      const propertyId = decodeURIComponent(path.slice('/properties/'.length));
+      const property = data.properties.find((item) => String(item.id) === propertyId);
+      return property ? <PropertyDetailsPage property={property} navigate={navigate} /> : <PropertiesPage properties={data.properties} navigate={navigate} />;
+    }
     if (path === '/services') return <ServicesPage services={data.services} navigate={navigate} />;
     if (path === '/about') return <AboutPage settings={data.settings} testimonials={data.testimonials} />;
-    if (path === '/contact') return <ContactPage settings={data.settings} />;
+    if (path === '/contact') {
+      const propertyId = new URLSearchParams(window.location.search).get('property');
+      return <ContactPage settings={data.settings} property={data.properties.find((item) => String(item.id) === propertyId)} />;
+    }
     if (path === '/list-property') return <PropertySubmissionPage pageImage={pageImages.submission} />;
     return <HomePage data={data} navigate={navigate} />;
   }, [data, path]);

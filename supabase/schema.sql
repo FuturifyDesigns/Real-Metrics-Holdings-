@@ -78,11 +78,26 @@ create table if not exists public.property_submissions (
   reviewed_at timestamptz
 );
 
+create table if not exists public.contact_inquiries (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(name) between 2 and 80),
+  email text not null check (char_length(email) <= 120),
+  phone text not null check (char_length(phone) between 7 and 20),
+  inquiry_type text not null check (inquiry_type in ('Property enquiry', 'General enquiry', 'Property search', 'Partnership', 'Website support')),
+  property_id uuid references public.properties(id) on delete set null,
+  property_title text not null default '' check (char_length(property_title) <= 120),
+  message text not null check (char_length(message) between 20 and 1500),
+  status text not null default 'new' check (status in ('new', 'contacted', 'resolved')),
+  created_at timestamptz not null default now(),
+  handled_at timestamptz
+);
+
 alter table public.site_settings enable row level security;
 alter table public.properties enable row level security;
 alter table public.services enable row level security;
 alter table public.testimonials enable row level security;
 alter table public.property_submissions enable row level security;
+alter table public.contact_inquiries enable row level security;
 
 drop policy if exists "Public read site settings" on public.site_settings;
 drop policy if exists "Public read properties" on public.properties;
@@ -94,6 +109,8 @@ drop policy if exists "Launch admin writes services" on public.services;
 drop policy if exists "Launch admin writes testimonials" on public.testimonials;
 drop policy if exists "Anyone submits a property for review" on public.property_submissions;
 drop policy if exists "Launch admin reviews property submissions" on public.property_submissions;
+drop policy if exists "Anyone sends a contact enquiry" on public.contact_inquiries;
+drop policy if exists "Launch admin manages contact enquiries" on public.contact_inquiries;
 
 create policy "Public read site settings" on public.site_settings for select using (true);
 create policy "Public read properties" on public.properties for select using (true);
@@ -107,6 +124,8 @@ create policy "Launch admin writes services" on public.services for all to authe
 create policy "Launch admin writes testimonials" on public.testimonials for all to authenticated using ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com') with check ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com');
 create policy "Anyone submits a property for review" on public.property_submissions for insert to anon, authenticated with check (status = 'pending' and consent = true);
 create policy "Launch admin reviews property submissions" on public.property_submissions for all to authenticated using ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com') with check ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com');
+create policy "Anyone sends a contact enquiry" on public.contact_inquiries for insert to anon, authenticated with check (status = 'new');
+create policy "Launch admin manages contact enquiries" on public.contact_inquiries for all to authenticated using ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com') with check ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com');
 
 drop function if exists public.approve_property_submission(uuid);
 create or replace function public.approve_property_submission(submission_id uuid, published_images text[])

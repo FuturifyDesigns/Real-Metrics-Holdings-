@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock3, Database, ImagePlus, LogOut, Plus, Save, Trash2, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock3, Database, ImagePlus, LogOut, Mail, Plus, Save, Trash2, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { hasSupabase, supabase } from '../lib/supabase';
 
@@ -21,8 +21,10 @@ export function Admin({ data, setData, onSave }) {
   const [submissions, setSubmissions] = useState([]);
   const [reviewImages, setReviewImages] = useState({});
   const [reviewing, setReviewing] = useState('');
+  const [inquiries, setInquiries] = useState([]);
   const sortedProperties = useMemo(() => data.properties, [data.properties]);
   const pendingSubmissions = useMemo(() => submissions.filter((item) => item.status === 'pending'), [submissions]);
+  const openInquiries = useMemo(() => inquiries.filter((item) => item.status !== 'resolved'), [inquiries]);
 
   useEffect(() => {
     if (!hasSupabase) return;
@@ -45,6 +47,10 @@ export function Admin({ data, setData, onSave }) {
           else setReviewImages(Object.fromEntries((signed || []).filter((item) => item.signedUrl).map((item) => [item.path, item.signedUrl])));
         }
       }
+    });
+    supabase.from('contact_inquiries').select('*').order('created_at', { ascending: false }).then(({ data: rows, error }) => {
+      if (error) setMessage(error.message);
+      else setInquiries(rows || []);
     });
   }, [session]);
 
@@ -99,6 +105,17 @@ export function Admin({ data, setData, onSave }) {
     finally { setReviewing(''); }
   };
 
+  const resolveInquiry = async (inquiry) => {
+    setReviewing(inquiry.id); setMessage('');
+    try {
+      const { error } = await supabase.from('contact_inquiries').update({ status: 'resolved', handled_at: new Date().toISOString() }).eq('id', inquiry.id);
+      if (error) throw error;
+      setInquiries((current) => current.map((item) => item.id === inquiry.id ? { ...item, status: 'resolved' } : item));
+      setMessage(`Enquiry from ${inquiry.name} marked as resolved.`);
+    } catch (error) { setMessage(error.message || 'Could not update the enquiry.'); }
+    finally { setReviewing(''); }
+  };
+
   const save = async () => {
     setSaving(true); setMessage('');
     try { await onSave(data); setMessage('Changes saved.'); }
@@ -115,6 +132,8 @@ export function Admin({ data, setData, onSave }) {
     <section className="admin-panel"><h2>Website content</h2><div className="admin-grid"><label>Homepage title<input value={data.settings.hero_title} onChange={(e) => updateSettings('hero_title', e.target.value)} /></label><label>Email<input value={data.settings.email} onChange={(e) => updateSettings('email', e.target.value)} /></label><label>Phone<input value={data.settings.phone} onChange={(e) => updateSettings('phone', e.target.value)} /></label><label>Address<input value={data.settings.address} onChange={(e) => updateSettings('address', e.target.value)} /></label><label className="wide">Homepage introduction<textarea value={data.settings.hero_subtitle} onChange={(e) => updateSettings('hero_subtitle', e.target.value)} /></label><label className="wide">About page title<input value={data.settings.about_title || ''} onChange={(e) => updateSettings('about_title', e.target.value)} /></label><label className="wide">About page text<textarea value={data.settings.about_body || ''} onChange={(e) => updateSettings('about_body', e.target.value)} /></label><label className="wide">Contact page introduction<textarea value={data.settings.contact_intro || ''} onChange={(e) => updateSettings('contact_intro', e.target.value)} /></label></div></section>
 
     <section className="admin-panel"><div className="panel-heading"><div><p className="eyebrow">Review queue</p><h2>Property submissions</h2></div><span className="submission-count"><Clock3 size={16} />{pendingSubmissions.length} awaiting approval</span></div>{pendingSubmissions.length ? <div className="submission-review-list">{pendingSubmissions.map((submission) => <article className="submission-review" key={submission.id}><div className="submission-review-images">{submission.images.map((image, index) => reviewImages[image] ? <img src={reviewImages[image]} alt={`${submission.title} ${index + 1}`} key={image} /> : <div className="review-image-loading" key={image}>Loading image…</div>)}</div><div className="submission-review-heading"><div><span>{submission.listing_type} · {submission.category}</span><h3>{submission.title}</h3><p>{submission.location} · {submission.price}</p></div><time dateTime={submission.created_at}>{new Date(submission.created_at).toLocaleDateString()}</time></div><p>{submission.description}</p><dl><div><dt>Submitted by</dt><dd>{submission.owner_name} ({submission.relationship})</dd></div><div><dt>Contact</dt><dd><a href={`mailto:${submission.owner_email}`}>{submission.owner_email}</a> · <a href={`tel:${submission.owner_phone}`}>{submission.owner_phone}</a></dd></div><div><dt>Details</dt><dd>{submission.bedrooms} beds · {submission.bathrooms} baths · {submission.size || 'Size not supplied'}</dd></div></dl><div className="review-actions"><button className="approve-button" type="button" disabled={reviewing === submission.id} onClick={() => approveSubmission(submission)}><CheckCircle2 size={17} />Approve and publish</button><button className="reject-button" type="button" disabled={reviewing === submission.id} onClick={() => rejectSubmission(submission)}><XCircle size={17} />Reject</button></div></article>)}</div> : <div className="admin-empty"><CheckCircle2 /><p>No property submissions are waiting for review.</p></div>}</section>
+
+    <section className="admin-panel"><div className="panel-heading"><div><p className="eyebrow">Inbox</p><h2>Contact enquiries</h2></div><span className="submission-count"><Mail size={16} />{openInquiries.length} open</span></div>{openInquiries.length ? <div className="inquiry-list">{openInquiries.map((inquiry) => <article className="inquiry-card" key={inquiry.id}><div className="inquiry-heading"><div><span>{inquiry.inquiry_type}</span><h3>{inquiry.property_title || `Enquiry from ${inquiry.name}`}</h3></div><time dateTime={inquiry.created_at}>{new Date(inquiry.created_at).toLocaleString()}</time></div><p>{inquiry.message}</p><div className="inquiry-contact"><strong>{inquiry.name}</strong><a href={`mailto:${inquiry.email}`}>{inquiry.email}</a><a href={`tel:${inquiry.phone}`}>{inquiry.phone}</a></div><div className="review-actions"><a className="approve-button" href={`mailto:${inquiry.email}?subject=${encodeURIComponent(`Re: ${inquiry.property_title || inquiry.inquiry_type}`)}`}><Mail size={17} />Reply by email</a><button className="reject-button" type="button" disabled={reviewing === inquiry.id} onClick={() => resolveInquiry(inquiry)}><CheckCircle2 size={17} />Mark resolved</button></div></article>)}</div> : <div className="admin-empty"><CheckCircle2 /><p>No contact enquiries need attention.</p></div>}</section>
 
     <section className="admin-panel"><div className="panel-heading"><h2>Properties</h2><button type="button" className="primary-button" onClick={() => addItem('properties', blankProperty())}><Plus size={16} />Add property</button></div><div className="property-editor-list">{sortedProperties.map((property) => <article className="property-editor" key={property.id}><div className="editor-heading"><strong>{property.title}</strong><button type="button" aria-label="Delete property" onClick={() => removeItem('properties', property.id)}><Trash2 size={16} /></button></div><div className="admin-grid"><label>Title<input value={property.title} onChange={(e) => updateCollection('properties', property.id, 'title', e.target.value)} /></label><label>Location<input value={property.location} onChange={(e) => updateCollection('properties', property.id, 'location', e.target.value)} /></label><label>Price<input value={property.price} onChange={(e) => updateCollection('properties', property.id, 'price', e.target.value)} /></label><label>Status<select value={property.status} onChange={(e) => updateCollection('properties', property.id, 'status', e.target.value)}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label><label>Category<input value={property.category} onChange={(e) => updateCollection('properties', property.id, 'category', e.target.value)} /></label><label>Bedrooms<input type="number" value={property.beds} onChange={(e) => updateCollection('properties', property.id, 'beds', Number(e.target.value))} /></label><label>Bathrooms<input type="number" value={property.baths} onChange={(e) => updateCollection('properties', property.id, 'baths', Number(e.target.value))} /></label><label>Size<input value={property.size} onChange={(e) => updateCollection('properties', property.id, 'size', e.target.value)} /></label><label className="check-row"><input type="checkbox" checked={property.featured} onChange={(e) => updateCollection('properties', property.id, 'featured', e.target.checked)} /> Featured</label><label className="wide">Description<textarea value={property.description} onChange={(e) => updateCollection('properties', property.id, 'description', e.target.value)} /></label><label className="wide"><span><ImagePlus size={15} /> Image URLs, one per line</span><textarea value={(property.images || []).join('\n')} onChange={(e) => updateImages(property.id, e.target.value)} /></label></div></article>)}</div></section>
 

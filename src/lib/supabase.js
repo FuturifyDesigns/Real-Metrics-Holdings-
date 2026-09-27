@@ -12,4 +12,5 @@ export const tables = {
   services: 'services',
   testimonials: 'testimonials',
   submissions: 'property_submissions',
+  inquiries: 'contact_inquiries',
 };
