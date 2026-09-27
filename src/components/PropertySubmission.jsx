@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight, ImagePlus, Send, Trash2, UploadCloud } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { hasSupabase, supabase } from '../lib/supabase';
+import { validatePhoneInput, phoneValidationMessage } from '../lib/validation';
 
 const MAX_IMAGES = 8;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -148,7 +149,7 @@ export function PropertySubmissionPage({ pageImage }) {
         <fieldset><legend>Your details</legend><div className="form-grid">
           <label>Full name *<input name="owner_name" autoComplete="name" minLength="2" maxLength="80" required /></label>
           <label>Email address *<input name="owner_email" type="email" autoComplete="email" maxLength="120" required /></label>
-          <label>Phone number *<input name="owner_phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[+0-9][0-9 ()-]{6,19}" title="Enter a valid phone number using digits, spaces, brackets, + or -." required /></label>
+          <label>Phone number *<input name="owner_phone" type="tel" autoComplete="tel" inputMode="tel" minLength="7" maxLength="20" title={phoneValidationMessage} onInput={validatePhoneInput} required /></label>
           <label>Your relationship to the property *<select name="relationship" required defaultValue=""><option value="" disabled>Select one</option><option>Owner</option><option>Landlord</option><option>Agent</option><option>Developer</option><option>Authorised representative</option></select></label>
         </div></fieldset>
         <fieldset><legend>Property details</legend><div className="form-grid">

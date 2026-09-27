@@ -88,7 +88,7 @@ create table if not exists public.contact_inquiries (
   name text not null check (char_length(name) between 2 and 80),
   email text not null check (char_length(email) <= 120),
   phone text not null check (char_length(phone) between 7 and 20),
-  inquiry_type text not null check (inquiry_type in ('Property enquiry', 'General enquiry', 'Property search', 'Partnership', 'Website support')),
+  inquiry_type text not null check (inquiry_type in ('Property enquiry', 'General enquiry', 'Property search', 'Partnership', 'Website support', 'Food product enquiry')),
   property_id uuid references public.properties(id) on delete set null,
   property_title text not null default '' check (char_length(property_title) <= 120),
   message text not null check (char_length(message) between 20 and 1500),
@@ -228,7 +228,7 @@ begin
   if char_length(trim(p_email)) not between 3 and 120 or position('@' in p_email) < 2 then raise exception 'Invalid email address'; end if;
   if char_length(trim(p_phone)) not between 7 and 20 then raise exception 'Invalid phone number'; end if;
   if char_length(trim(p_message)) not between 20 and 1500 then raise exception 'Invalid message'; end if;
-  if p_inquiry_type not in ('Property enquiry', 'General enquiry', 'Property search', 'Partnership', 'Website support') then raise exception 'Invalid inquiry type'; end if;
+  if p_inquiry_type not in ('Property enquiry', 'General enquiry', 'Property search', 'Partnership', 'Website support', 'Food product enquiry') then raise exception 'Invalid inquiry type'; end if;
   client_ip := trim(split_part(coalesce(headers ->> 'x-forwarded-for', headers ->> 'x-real-ip', ''), ',', 1));
   request_fingerprint := encode(digest(lower(trim(p_email)) || '|' || trim(p_phone) || '|' || trim(client_ip), 'sha256'), 'hex');
   if client_ip <> '' then
