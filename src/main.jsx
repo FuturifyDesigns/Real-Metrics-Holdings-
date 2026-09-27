@@ -14,6 +14,21 @@ import './styles.css';
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const publicAsset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 const routes = ['/', '/properties', '/services', '/products', '/products/enquire', '/geohub', '/about', '/contact', '/list-property', '/privacy', '/terms', '/admin'];
+const siteUrl = 'https://realmetricsholdings.com';
+const seoPages = {
+  '/': { title: 'Real Metrics Holdings | Property Advertising in Botswana', description: 'Real Metrics Holdings provides professional property advertising and listings in Botswana, alongside food products and GeoHub geoscience consulting services.' },
+  '/properties': { title: 'Properties for Sale and Rent | Real Metrics Holdings', description: 'Explore professionally presented residential, rental, and commercial property listings in Botswana.' },
+  '/services': { title: 'Property Advertising Services | Real Metrics Holdings', description: 'Property campaign strategy, listing copy, showcase pages, and market-ready presentation for Botswana property owners and professionals.' },
+  '/products': { title: 'Food & Agricultural Products | Real Metrics Holdings', description: 'Explore salts, grains, cereals, legumes, nuts, spices, roots, and specialty produce for wholesale and commercial enquiries.' },
+  '/products/enquire': { title: 'Food Product Enquiry | Real Metrics Holdings', description: 'Send a private food and agricultural product sourcing enquiry to Real Metrics Holdings.', noindex: true },
+  '/geohub': { title: 'GeoHub Geoscience Consulting Botswana | Real Metrics Holdings', description: 'Borehole advisory, water testing, geophysical surveys, geological exploration, land surveying, environmental assessments, and soil testing in Botswana.' },
+  '/about': { title: 'About Real Metrics Holdings | Botswana', description: 'Learn about Real Metrics Holdings and its approach to clear information, strong presentation, and trusted service in Botswana.' },
+  '/contact': { title: 'Contact Real Metrics Holdings | Botswana', description: 'Contact Real Metrics Holdings about property advertising, listings, partnerships, and general enquiries in Botswana.' },
+  '/list-property': { title: 'List Your Property | Real Metrics Holdings', description: 'Submit a Botswana property for review and professional presentation by Real Metrics Holdings.' },
+  '/privacy': { title: 'Privacy Notice | Real Metrics Holdings', description: 'Read how Real Metrics Holdings collects, uses, protects, and retains personal information.' },
+  '/terms': { title: 'Terms of Service | Real Metrics Holdings', description: 'Read the terms that apply when using the Real Metrics Holdings website and services.' },
+  '/admin': { title: 'Admin | Real Metrics Holdings', description: 'Private website administration.', noindex: true },
+};
 
 function currentPath() {
   const pathname = window.location.pathname;
@@ -432,12 +447,16 @@ function App() {
   const [editor, setEditor] = useState(null);
   useEffect(() => { loadCmsData().then(setData); }, []);
   useEffect(() => {
-    const titles = {
-      '/products': 'Food & Agricultural Products | Real Metrics Holdings',
-      '/products/enquire': 'Food Product Enquiry | Real Metrics Holdings',
-      '/geohub': 'GeoHub Geoscience Consulting | Real Metrics Holdings',
-    };
-    document.title = titles[path] || 'Real Metrics Holdings | Real Estate Advertising';
+    const page = seoPages[path] || seoPages['/'];
+    const canonicalPath = page.noindex ? '/' : path;
+    const canonical = `${siteUrl}${canonicalPath === '/' ? '/' : canonicalPath}`;
+    document.title = page.title;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', page.description);
+    document.querySelector('meta[name="robots"]')?.setAttribute('content', page.noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large');
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', canonical);
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content', page.title);
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content', page.description);
+    document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonical);
   }, [path]);
   useEffect(() => {
     if (!liveEditing || !hasSupabase) return;

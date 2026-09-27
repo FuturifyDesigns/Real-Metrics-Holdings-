@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /products/enquire
+
+Sitemap: https://realmetricsholdings.com/sitemap.xml
