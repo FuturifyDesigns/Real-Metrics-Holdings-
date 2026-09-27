@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 const statusClass = (status) => `status status-${String(status).toLowerCase().replaceAll(' ', '-')}`;
 
-export function PropertyCard({ property }) {
+export function PropertyCard({ property, contactHref = '/contact' }) {
   const [imageIndex, setImageIndex] = useState(0);
   const images = property.images?.length ? property.images : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1400&q=85'];
 
@@ -37,7 +37,7 @@ export function PropertyCard({ property }) {
         </div>
         <div className="property-footer">
           <strong>{property.price}</strong>
-          <a href="#contact" aria-label={`Ask about ${property.title}`}>Enquire <MoveUpRight size={16} /></a>
+          <a href={contactHref} aria-label={`Ask about ${property.title}`}>Enquire <MoveUpRight size={16} /></a>
         </div>
       </div>
     </article>

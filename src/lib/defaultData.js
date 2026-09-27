@@ -1,11 +1,14 @@
 export const defaultSettings = {
   brand_name: 'Real Metrics Holdings',
-  hero_title: 'Real estate advertising with measurable presence.',
+  hero_title: 'Homes presented with purpose.',
   hero_subtitle:
-    'Premium property campaigns, refined listing showcases, and market-ready presentation for sellers, landlords, agents, and developers.',
+    'Thoughtful property advertising for sellers, landlords, agents, and developers across Botswana.',
   email: 'info@realmetricsholdings.com',
   phone: '+267 72 633 424',
   address: 'Gaborone, Botswana',
+  about_title: 'Property presentation with a local point of view.',
+  about_body: 'We started Real Metrics Holdings to give Botswana property a more considered place in the market. Each listing is shaped to feel clear, credible, and worth someone’s time.',
+  contact_intro: 'Whether you are selling, letting, or launching a development, tell us what you need to bring to market.',
 };
 
 export const defaultProperties = [

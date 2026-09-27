@@ -40,7 +40,7 @@ export async function loadCmsData() {
   if (hasError) return readLocal();
 
   return {
-    settings: settingsResult.data || defaultSettings,
+    settings: { ...defaultSettings, ...(settingsResult.data || {}) },
     properties: propertiesResult.data?.length ? propertiesResult.data : defaultProperties,
     services: servicesResult.data?.length ? ordered(servicesResult.data) : defaultServices,
     testimonials: testimonialsResult.data?.length ? ordered(testimonialsResult.data) : defaultTestimonials,
@@ -53,16 +53,31 @@ export async function saveCmsData(data) {
     return data;
   }
 
-  await supabase
+  const settingsResult = await supabase
     .from(tables.settings)
     .upsert({ ...data.settings, singleton_key: 'main', updated_at: new Date().toISOString() }, { onConflict: 'singleton_key' });
+
+  if (settingsResult.error) throw settingsResult.error;
 
   const upsertCollection = async (table, collection) => {
     const payload = collection.map((item) => ({
       ...item,
       updated_at: new Date().toISOString(),
     }));
-    if (payload.length) await supabase.from(table).upsert(payload);
+    const existing = await supabase.from(table).select('id');
+    if (existing.error) throw existing.error;
+
+    const retainedIds = new Set(collection.map((item) => item.id));
+    const removedIds = (existing.data || []).map((item) => item.id).filter((id) => !retainedIds.has(id));
+    if (removedIds.length) {
+      const deletion = await supabase.from(table).delete().in('id', removedIds);
+      if (deletion.error) throw deletion.error;
+    }
+
+    if (payload.length) {
+      const result = await supabase.from(table).upsert(payload);
+      if (result.error) throw result.error;
+    }
   };
 
   await Promise.all([

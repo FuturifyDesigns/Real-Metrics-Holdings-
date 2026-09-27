@@ -9,8 +9,15 @@ create table if not exists public.site_settings (
   email text not null default 'info@realmetricsholdings.com',
   phone text not null default '+267 72 633 424',
   address text default 'Gaborone, Botswana',
+  about_title text not null default 'Property presentation with a local point of view.',
+  about_body text not null default 'We started Real Metrics Holdings to give Botswana property a more considered place in the market. Each listing is shaped to feel clear, credible, and worth someone''s time.',
+  contact_intro text not null default 'Whether you are selling, letting, or launching a development, tell us what you need to bring to market.',
   updated_at timestamptz not null default now()
 );
+
+alter table public.site_settings add column if not exists about_title text not null default 'Property presentation with a local point of view.';
+alter table public.site_settings add column if not exists about_body text not null default 'We started Real Metrics Holdings to give Botswana property a more considered place in the market. Each listing is shaped to feel clear, credible, and worth someone''s time.';
+alter table public.site_settings add column if not exists contact_intro text not null default 'Whether you are selling, letting, or launching a development, tell us what you need to bring to market.';
 
 create table if not exists public.properties (
   id uuid primary key default gen_random_uuid(),
@@ -66,12 +73,11 @@ create policy "Public read properties" on public.properties for select using (tr
 create policy "Public read services" on public.services for select using (true);
 create policy "Public read testimonials" on public.testimonials for select using (true);
 
--- Launch mode: GitHub Pages has no private server layer, so browser CMS writes need anon-key write policies.
--- Before paid traffic, replace these with Supabase Auth or Edge Function policies restricted to approved admins.
-create policy "Launch admin writes site settings" on public.site_settings for all using (true) with check (true);
-create policy "Launch admin writes properties" on public.properties for all using (true) with check (true);
-create policy "Launch admin writes services" on public.services for all using (true) with check (true);
-create policy "Launch admin writes testimonials" on public.testimonials for all using (true) with check (true);
+-- Only the approved authenticated administrator can change website content.
+create policy "Launch admin writes site settings" on public.site_settings for all to authenticated using ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com') with check ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com');
+create policy "Launch admin writes properties" on public.properties for all to authenticated using ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com') with check ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com');
+create policy "Launch admin writes services" on public.services for all to authenticated using ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com') with check ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com');
+create policy "Launch admin writes testimonials" on public.testimonials for all to authenticated using ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com') with check ((auth.jwt() ->> 'email') = 'info@realmetricsholdings.com');
 
 insert into public.site_settings (singleton_key)
 values ('main')
