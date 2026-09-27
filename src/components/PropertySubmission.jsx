@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, ImagePlus, Send, Trash2, UploadCloud } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { hasSupabase, supabase, tables } from '../lib/supabase';
+import { hasSupabase, supabase } from '../lib/supabase';
 
 const MAX_IMAGES = 8;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -70,6 +70,16 @@ export function PropertySubmissionPage({ pageImage }) {
     const uploadedPaths = [];
 
     try {
+      const ownerEmail = String(form.get('owner_email')).trim().toLowerCase();
+      const ownerPhone = String(form.get('owner_phone')).trim();
+      const { error: reservationError } = await supabase.rpc('reserve_property_submission', {
+        p_id: submissionId,
+        p_owner_email: ownerEmail,
+        p_owner_phone: ownerPhone,
+        p_honeypot: String(form.get('company_website') || ''),
+      });
+      if (reservationError) throw reservationError;
+
       for (const [index, item] of images.entries()) {
         const path = `${submissionId}/${String(index + 1).padStart(2, '0')}-${crypto.randomUUID()}-${safeFileName(item.file.name)}`;
         const { error: uploadError } = await supabase.storage
@@ -82,8 +92,8 @@ export function PropertySubmissionPage({ pageImage }) {
       const payload = {
         id: submissionId,
         owner_name: String(form.get('owner_name')).trim(),
-        owner_email: String(form.get('owner_email')).trim().toLowerCase(),
-        owner_phone: String(form.get('owner_phone')).trim(),
+        owner_email: ownerEmail,
+        owner_phone: ownerPhone,
         relationship: form.get('relationship'),
         listing_type: form.get('listing_type'),
         category: form.get('category'),
@@ -98,7 +108,25 @@ export function PropertySubmissionPage({ pageImage }) {
         consent: form.get('consent') === 'on',
         status: 'pending',
       };
-      const { error } = await supabase.from(tables.submissions).insert(payload);
+      const { error } = await supabase.rpc('submit_property_for_review', {
+        p_id: payload.id,
+        p_owner_name: payload.owner_name,
+        p_owner_email: payload.owner_email,
+        p_owner_phone: payload.owner_phone,
+        p_relationship: payload.relationship,
+        p_listing_type: payload.listing_type,
+        p_category: payload.category,
+        p_title: payload.title,
+        p_location: payload.location,
+        p_price: payload.price,
+        p_bedrooms: payload.bedrooms,
+        p_bathrooms: payload.bathrooms,
+        p_size: payload.size,
+        p_description: payload.description,
+        p_images: payload.images,
+        p_consent: payload.consent,
+        p_honeypot: String(form.get('company_website') || ''),
+      });
       if (error) throw error;
 
       images.forEach(({ preview }) => URL.revokeObjectURL(preview));
@@ -116,7 +144,7 @@ export function PropertySubmissionPage({ pageImage }) {
     <section className="page-intro"><img src={pageImage} alt="Contemporary home prepared for a property listing" /><div className="page-intro-shade" /><div className="page-intro-copy"><p className="eyebrow light">List your property</p><h1>Share it with the market.</h1><p>Send us the complete property brief and image set. Every submission is reviewed before it appears on the website.</p></div></section>
     <section className="submission-section section">
       <div className="submission-intro reveal"><p className="eyebrow">Property submission</p><h2>Tell us everything buyers or tenants should know.</h2><p>Fields marked with an asterisk are required. Add clear, recent images and arrange them in the order you would like them reviewed.</p><div className="submission-note"><strong>What happens next?</strong><span>Our administrator checks the details and images, contacts you if anything is missing, and approves suitable listings for publication.</span></div></div>
-      <form className="listing-form reveal" onSubmit={submit}>
+      <form className="listing-form reveal" onSubmit={submit}><label className="honeypot" aria-hidden="true">Company website<input name="company_website" tabIndex="-1" autoComplete="off" /></label>
         <fieldset><legend>Your details</legend><div className="form-grid">
           <label>Full name *<input name="owner_name" autoComplete="name" minLength="2" maxLength="80" required /></label>
           <label>Email address *<input name="owner_email" type="email" autoComplete="email" maxLength="120" required /></label>
@@ -135,7 +163,7 @@ export function PropertySubmissionPage({ pageImage }) {
           <label className="wide">Description *<textarea name="description" rows="7" minLength="40" maxLength="2000" placeholder="Describe the condition, key features, access, parking, security, amenities and availability." required /></label>
         </div></fieldset>
         <fieldset><legend>Property images *</legend><p className="field-help">Upload 1–8 JPG, PNG, or WebP images. Maximum 8 MB each. Use the arrows to arrange them; the first image will be the cover.</p><label className="upload-zone"><UploadCloud /><strong>Choose property images</strong><span>Clear landscape images work best</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={addImages} /></label>{images.length > 0 && <div className="image-edit-grid">{images.map((item, index) => <article key={item.preview} className="image-edit-card"><img src={item.preview} alt={`Selected property image ${index + 1}`} /><span>{index === 0 ? 'Cover image' : `Image ${index + 1}`}</span><div><button type="button" onClick={() => moveImage(index, -1)} disabled={index === 0} aria-label={`Move image ${index + 1} left`}><ArrowLeft /></button><button type="button" onClick={() => moveImage(index, 1)} disabled={index === images.length - 1} aria-label={`Move image ${index + 1} right`}><ArrowRight /></button><button type="button" onClick={() => removeImage(index)} aria-label={`Remove image ${index + 1}`}><Trash2 /></button></div></article>)}</div>}</fieldset>
-        <label className="consent-row"><input name="consent" type="checkbox" required /><span>I confirm that I am authorised to submit this property and that the details and images are accurate. *</span></label>
+        <label className="consent-row"><input name="consent" type="checkbox" required /><span>I am at least 18, am authorised to submit this property, confirm the details and images are accurate, and accept the <a href={`${import.meta.env.BASE_URL}terms`} target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href={`${import.meta.env.BASE_URL}privacy`} target="_blank" rel="noopener noreferrer">Privacy Notice</a>. *</span></label>
         <button className="primary-button" type="submit" disabled={submitting}><ImagePlus size={17} />{submitting ? 'Uploading and submitting…' : 'Submit property for review'}<Send size={16} /></button>
         {message && <p className={`submission-message ${message.startsWith('Thank') ? 'success' : ''}`} role="status" aria-live="polite">{message}</p>}
       </form>
