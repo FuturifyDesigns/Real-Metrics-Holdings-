@@ -10,6 +10,8 @@ const seed = {
   testimonials: defaultTestimonials,
 };
 
+export const initialCmsData = seed;
+
 const readLocal = () => {
   const saved = window.localStorage.getItem(localKey);
   if (!saved) return seed;

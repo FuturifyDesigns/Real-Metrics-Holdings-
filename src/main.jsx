@@ -1,19 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   ArrowRight, Bath, BedDouble, Building2, ChartNoAxesCombined, Check, ChevronLeft, ChevronRight,
-  ImagePlus, Mail, MapPin, Megaphone, Menu, Phone, Ruler, Send, ShieldCheck, X,
+  ImagePlus, Mail, MapPin, Megaphone, Phone, Ruler, Send, ShieldCheck,
 } from 'lucide-react';
 import { Admin } from './components/Admin';
 import { PropertyCard } from './components/PropertyCard';
 import { PropertySubmissionPage } from './components/PropertySubmission';
-import { loadCmsData, saveCmsData } from './lib/store';
+import { initialCmsData, loadCmsData, saveCmsData } from './lib/store';
 import { hasSupabase, supabase } from './lib/supabase';
 import './styles.css';
-
-gsap.registerPlugin(ScrollTrigger);
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const publicAsset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
@@ -271,7 +267,14 @@ function TermsPage({ settings }) {
 function Header({ path, navigate }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const links = [['/', 'Home'], ['/properties', 'Properties'], ['/services', 'Services'], ['/about', 'About'], ['/contact', 'Contact']];
-  return <header className="site-header"><Link className="brand" to="/" onNavigate={navigate} aria-label="Real Metrics Holdings home"><img src={publicAsset('real-metrics-logo-transparent.png')} alt="Real Metrics Holdings" /></Link><nav className={`nav ${menuOpen ? 'open' : ''}`} aria-label="Primary navigation">{links.map(([to, label]) => <Link key={to} className={path === to ? 'active' : ''} to={to} onNavigate={(next) => { setMenuOpen(false); navigate(next); }}>{label}</Link>)}</nav><Link className="header-cta" to="/list-property" onNavigate={navigate}>List your property <ArrowRight size={16} /></Link><button className="menu-button" type="button" onClick={() => setMenuOpen((current) => !current)} aria-label="Toggle menu">{menuOpen ? <X /> : <Menu />}</button></header>;
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const closeOnEscape = (event) => { if (event.key === 'Escape') setMenuOpen(false); };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [menuOpen]);
+  const closeAndNavigate = (next) => { setMenuOpen(false); navigate(next); };
+  return <header className="site-header"><Link className="brand" to="/" onNavigate={navigate} aria-label="Real Metrics Holdings home"><img src={publicAsset('real-metrics-logo-transparent.png')} alt="Real Metrics Holdings" decoding="async" /></Link><nav id="primary-navigation" className={`nav ${menuOpen ? 'open' : ''}`} aria-label="Primary navigation">{links.map(([to, label]) => <Link key={to} className={path === to ? 'active' : ''} to={to} onNavigate={closeAndNavigate}>{label}</Link>)}<Link className="mobile-nav-cta" to="/list-property" onNavigate={closeAndNavigate}>List your property <ArrowRight size={17} /></Link></nav><Link className="header-cta" to="/list-property" onNavigate={navigate}>List your property <ArrowRight size={16} /></Link><button className={`menu-button ${menuOpen ? 'open' : ''}`} type="button" onClick={() => setMenuOpen((current) => !current)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} aria-controls="primary-navigation"><span className="menu-icon" aria-hidden="true"><i /><i /><i /></span></button></header>;
 }
 
 function Footer({ settings, navigate }) {
@@ -279,15 +282,26 @@ function Footer({ settings, navigate }) {
 }
 
 function App() {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(initialCmsData);
   const [path, setPath] = useState(currentPath());
   useEffect(() => { loadCmsData().then(setData); }, []);
   useEffect(() => { const sync = () => setPath(currentPath()); window.addEventListener('popstate', sync); return () => window.removeEventListener('popstate', sync); }, []);
   useEffect(() => {
-    if (!data || path === '/admin') return undefined;
+    if (path === '/admin') return undefined;
     window.scrollTo({ top: 0, behavior: 'instant' });
-    const ctx = gsap.context(() => { gsap.utils.toArray('.reveal').forEach((element) => gsap.from(element, { scrollTrigger: { trigger: element, start: 'top 88%' }, y: 34, opacity: 0, duration: 0.8, ease: 'power3.out' })); });
-    return () => ctx.revert();
+    const elements = Array.from(document.querySelectorAll('.reveal'));
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+      elements.forEach((element) => element.classList.add('is-visible'));
+      return undefined;
+    }
+    const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      }
+    }), { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+    elements.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
   }, [data, path]);
   const navigate = (next) => setPath(next);
   const page = useMemo(() => {
@@ -310,7 +324,6 @@ function App() {
     if (path === '/terms') return <TermsPage settings={data.settings} />;
     return <HomePage data={data} navigate={navigate} />;
   }, [data, path]);
-  if (!data) return <div className="loading">Real Metrics Holdings</div>;
   if (path === '/admin') return page;
   return <><Header path={path} navigate={navigate} />{page}<Footer settings={data.settings} navigate={navigate} /></>;
 }
