@@ -324,6 +324,7 @@ function App() {
     if (path === '/terms') return <TermsPage settings={data.settings} />;
     return <HomePage data={data} navigate={navigate} />;
   }, [data, path]);
+  if (!data) return <><Header path={path} navigate={navigate} /><main className="page-pending" aria-busy="true" /></>;
   if (path === '/admin') return page;
   return <><Header path={path} navigate={navigate} />{page}<Footer settings={data.settings} navigate={navigate} /></>;
 }

@@ -10,20 +10,25 @@ const seed = {
   testimonials: defaultTestimonials,
 };
 
-export const initialCmsData = seed;
-
-const readLocal = () => {
-  const saved = window.localStorage.getItem(localKey);
-  if (!saved) return seed;
+const readCached = () => {
   try {
-    return { ...seed, ...JSON.parse(saved) };
+    const saved = window.localStorage.getItem(localKey);
+    return saved ? { ...seed, ...JSON.parse(saved) } : null;
   } catch {
-    return seed;
+    return null;
   }
 };
 
+export const initialCmsData = hasSupabase ? readCached() : (readCached() || seed);
+
+const readLocal = () => readCached() || seed;
+
 const writeLocal = (data) => {
-  window.localStorage.setItem(localKey, JSON.stringify(data));
+  try {
+    window.localStorage.setItem(localKey, JSON.stringify(data));
+  } catch {
+    // The live data still works when storage is unavailable.
+  }
 };
 
 const ordered = (items) => [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
@@ -41,12 +46,14 @@ export async function loadCmsData() {
   const hasError = [settingsResult, propertiesResult, servicesResult, testimonialsResult].some((result) => result.error);
   if (hasError) return readLocal();
 
-  return {
+  const data = {
     settings: { ...defaultSettings, ...(settingsResult.data || {}) },
     properties: propertiesResult.data?.length ? propertiesResult.data : defaultProperties,
     services: servicesResult.data?.length ? ordered(servicesResult.data) : defaultServices,
     testimonials: testimonialsResult.data?.length ? ordered(testimonialsResult.data) : defaultTestimonials,
   };
+  writeLocal(data);
+  return data;
 }
 
 export async function saveCmsData(data) {
@@ -88,5 +95,6 @@ export async function saveCmsData(data) {
     upsertCollection(tables.testimonials, data.testimonials),
   ]);
 
+  writeLocal(data);
   return data;
 }

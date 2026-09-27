@@ -10,6 +10,7 @@ h1,h2,h3,p { overflow-wrap:break-word; }
 h1,h2 { font-family:'Libre Baskerville',Georgia,serif; font-weight:700; letter-spacing:0; }
 .reveal { opacity:0; transform:translateY(28px); transition:opacity .62s ease,transform .62s cubic-bezier(.22,1,.36,1); }
 .reveal.is-visible { opacity:1; transform:none; }
+.page-pending { min-height:100vh; background:var(--black); }
 
 .site-header { position:fixed; inset:0 0 auto; z-index:50; height:78px; display:grid; grid-template-columns:220px 1fr auto; align-items:center; gap:26px; padding:5px clamp(18px,4vw,64px); background:rgba(255,255,255,.95); border-bottom:1px solid rgba(17,17,19,.08); backdrop-filter:blur(14px); }
 .brand { align-self:stretch; display:flex; align-items:center; overflow:hidden; }
