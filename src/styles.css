@@ -309,7 +309,10 @@ cite span { color:var(--muted); font-weight:400; }
 .legal-sections p { margin:0; color:var(--muted); line-height:1.8; }
 
 .admin-shell { min-height:100vh; padding:clamp(22px,4vw,48px); background:#f1f1f1; }
-.admin-login { width:min(450px,100%); margin:7vh auto; padding:32px; display:grid; gap:14px; background:white; border-radius:6px; box-shadow:var(--shadow); }
+.admin-auth-shell { display:grid; place-items:center; background-image:linear-gradient(90deg,rgba(10,10,12,.72),rgba(10,10,12,.4)),var(--admin-background); background-size:cover; background-position:center; background-attachment:fixed; }
+.admin-login { width:min(450px,100%); margin:7vh auto; padding:32px; display:grid; gap:14px; background:rgba(255,255,255,.97); border:1px solid rgba(255,255,255,.42); border-radius:10px; box-shadow:0 28px 80px rgba(0,0,0,.32); }
+.admin-auth-shell .admin-login { margin:0; }
+.admin-session-check { padding:14px 18px; color:white; background:rgba(10,10,12,.72); border-radius:6px; font-weight:700; }
 .admin-login img { width:190px; height:90px; object-fit:contain; }
 .admin-login h1 { margin:0; font-size:2.5rem; }
 .admin-login p { margin:0 0 8px; color:var(--muted); line-height:1.6; }
@@ -375,6 +378,7 @@ cite span { color:var(--muted); font-weight:400; }
   .footer-main .footer-links:last-child { grid-column:2/-1; }
 }
 @media (max-width:780px) {
+  .admin-auth-shell { background-attachment:scroll; }
   .site-header { height:70px; grid-template-columns:1fr auto; padding:5px 16px; background:white; backdrop-filter:none; }
   .brand img { width:170px; height:58px; }
   .header-cta { display:none; }

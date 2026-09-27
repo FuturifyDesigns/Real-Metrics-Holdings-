@@ -4,6 +4,7 @@ import { hasSupabase, supabase } from '../lib/supabase';
 
 const statuses = ['Available', 'For Sale', 'For Rent', 'Sold', 'Rented', 'Tenanted'];
 const adminEmail = 'info@realmetricsholdings.com';
+const adminAuthStyle = { '--admin-background': `url(${import.meta.env.BASE_URL}images/hero-residence.png)` };
 
 const blankProperty = () => ({
   id: crypto.randomUUID(), title: 'New Property', location: 'Gaborone', price: 'BWP ', status: 'Available', category: 'Residential', beds: 3, baths: 2, size: '250 sqm', featured: false, description: '', images: [],
@@ -123,8 +124,8 @@ export function Admin({ data, setData, onSave }) {
     finally { setSaving(false); }
   };
 
-  if (checking) return <main className="admin-shell"><div className="loading">Checking session...</div></main>;
-  if (!session || session.user.email?.toLowerCase() !== adminEmail) return <main className="admin-shell"><form className="admin-login" onSubmit={login}><img src={`${import.meta.env.BASE_URL}real-metrics-logo-transparent.png`} alt="Real Metrics Holdings" /><p className="eyebrow">Private access</p><h1>Admin CMS</h1><p>Sign in to manage website content and property advertisements.</p><label>Email<input value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="username" required /></label><label>Password<input value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" required /></label><button className="primary-button" type="submit">Sign in</button>{message && <span className="form-message">{message}</span>}</form></main>;
+  if (checking) return <main className="admin-shell admin-auth-shell" style={adminAuthStyle}><div className="admin-session-check">Checking session…</div></main>;
+  if (!session || session.user.email?.toLowerCase() !== adminEmail) return <main className="admin-shell admin-auth-shell" style={adminAuthStyle}><form className="admin-login" onSubmit={login}><img src={`${import.meta.env.BASE_URL}real-metrics-logo-transparent.png`} alt="Real Metrics Holdings" /><p className="eyebrow">Private access</p><h1>Admin CMS</h1><p>Sign in to manage website content and property advertisements.</p><label>Email<input value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="username" required /></label><label>Password<input value={password} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete="current-password" required /></label><button className="primary-button" type="submit">Sign in</button>{message && <span className="form-message">{message}</span>}</form></main>;
 
   return <main className="admin-shell">
     <section className="admin-top"><div><p className="eyebrow">Real Metrics CMS</p><h1>Admin Dashboard</h1><p>Manage the content shown across the website.</p></div><div className="admin-actions"><span className="database-pill"><Database size={15} />Supabase connected</span><button type="button" className="ghost-button" onClick={logout}><LogOut size={16} />Log out</button><button type="button" className="primary-button" onClick={save} disabled={saving}><Save size={16} />{saving ? 'Saving...' : 'Save changes'}</button></div></section>
