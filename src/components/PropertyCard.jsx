@@ -6,7 +6,7 @@ const statusClass = (status) => `status status-${String(status).toLowerCase().re
 export function PropertyCard({ property, contactHref = '/contact', detailHref, onNavigate }) {
   const [imageIndex, setImageIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const images = property.images?.length ? property.images : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1400&q=85'];
+  const images = property.images?.length ? property.images : ['https://images.unsplash.com/photo-1691425700585-c108acad6467?auto=format&fit=crop&w=1200&q=76'];
 
   useEffect(() => {
     setImageIndex(0);
@@ -32,7 +32,7 @@ export function PropertyCard({ property, contactHref = '/contact', detailHref, o
   return (
     <article className={`property-card reveal${property.featured ? ' featured-card' : ''}`} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false); }}>
       <div className="property-media">
-        {images.map((image, index) => <img className={index === imageIndex ? 'active' : ''} src={image} alt={index === imageIndex ? `${property.title}, gallery image ${index + 1}` : ''} aria-hidden={index !== imageIndex} key={image} />)}
+        {images.map((image, index) => <img className={index === imageIndex ? 'active' : ''} src={image} alt={index === imageIndex ? `${property.title}, gallery image ${index + 1}` : ''} aria-hidden={index !== imageIndex} loading="lazy" decoding="async" key={image} />)}
         <a className="property-media-link" href={detailHref} onClick={(event) => follow(event, detailHref)} aria-label={`View full details for ${property.title}`} />
         <span className={statusClass(property.status)}>{property.status}</span>
         {property.featured && <span className="featured-pill">Featured</span>}
