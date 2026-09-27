@@ -59,7 +59,7 @@ h1,h2 { font-family:'Libre Baskerville',Georgia,serif; font-weight:700; letter-s
 .section-heading h2,.editorial-copy h2,.cta-band h2,.contact-details h2,.about-statement h2,.process-band h2 { margin:0; font-size:clamp(2rem,3.5vw,3.75rem); line-height:1.12; }
 .section-heading>p:not(.eyebrow),.editorial-copy>p,.contact-details>p,.about-body p,.service-row p { color:var(--muted); line-height:1.75; }
 .property-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; }
-.property-card { position:relative; background:var(--white); border:1px solid #dedbd6; border-radius:14px; overflow:hidden; box-shadow:0 9px 28px rgba(17,17,19,.055); transition:transform .35s ease,box-shadow .35s ease,border-color .35s ease; }
+.property-card { position:relative; height:100%; display:flex; flex-direction:column; background:var(--white); border:1px solid #dedbd6; border-radius:14px; overflow:hidden; box-shadow:0 9px 28px rgba(17,17,19,.055); transition:transform .35s ease,box-shadow .35s ease,border-color .35s ease; }
 .property-card::after { content:""; position:absolute; inset:auto 0 0; height:4px; background:linear-gradient(90deg,var(--red),#ed5960); transform:scaleX(0); transform-origin:left; transition:transform .35s ease; }
 .property-card:hover { transform:translateY(-7px); border-color:#cac6c0; box-shadow:0 24px 58px rgba(17,17,19,.14); }
 .property-card:hover::after { transform:scaleX(1); }
@@ -81,7 +81,7 @@ h1,h2 { font-family:'Libre Baskerville',Georgia,serif; font-weight:700; letter-s
 .slider-controls button { width:28px; height:28px; display:grid; place-items:center; padding:0; border:0; border-radius:50%; color:white; background:transparent; cursor:pointer; font-size:1.12rem; }
 .slider-controls button:hover { background:rgba(255,255,255,.18); }
 .slider-controls span { min-width:28px; text-align:center; font-size:.68rem; font-weight:700; }
-.property-body { min-height:310px; padding:22px; display:flex; flex-direction:column; gap:13px; }
+.property-body { min-height:310px; flex:1; padding:22px; display:flex; flex-direction:column; gap:13px; }
 .property-card-heading { display:flex; align-items:center; justify-content:space-between; gap:15px; }
 .property-card-heading .eyebrow { margin:0; }
 .property-card-heading>strong { color:var(--red); font-size:.98rem; text-align:right; }
