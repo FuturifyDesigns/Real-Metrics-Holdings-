@@ -282,7 +282,7 @@ function ProductEnquiryPage({ settings, navigate }) {
         p_property_title: `Product enquiry: ${product}`,
         p_message: message,
         p_privacy_consent: form.get('privacy_consent') === 'on',
-        p_honeypot: String(form.get('company_website') || ''),
+        p_honeypot: '',
       });
       if (error) throw error;
       setFormMessage('Your product enquiry has been saved. Your email application is opening with the details ready to send.');
@@ -332,7 +332,7 @@ function ContactPage({ settings, property, editMode = false, onEdit }) {
         p_property_title: inquiry.property_title,
         p_message: inquiry.message,
         p_privacy_consent: inquiry.privacy_consent,
-        p_honeypot: String(form.get('company_website') || ''),
+        p_honeypot: '',
       });
       if (error) throw error;
       setFormMessage('Your enquiry has been saved. Your email application is opening with the details ready to send.');

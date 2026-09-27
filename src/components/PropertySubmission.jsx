@@ -77,7 +77,7 @@ export function PropertySubmissionPage({ pageImage }) {
         p_id: submissionId,
         p_owner_email: ownerEmail,
         p_owner_phone: ownerPhone,
-        p_honeypot: String(form.get('company_website') || ''),
+        p_honeypot: '',
       });
       if (reservationError) throw reservationError;
 
@@ -126,7 +126,7 @@ export function PropertySubmissionPage({ pageImage }) {
         p_description: payload.description,
         p_images: payload.images,
         p_consent: payload.consent,
-        p_honeypot: String(form.get('company_website') || ''),
+        p_honeypot: '',
       });
       if (error) throw error;
 
