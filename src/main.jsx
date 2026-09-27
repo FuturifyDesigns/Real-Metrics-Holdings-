@@ -13,7 +13,7 @@ import './styles.css';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const publicAsset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
-const routes = ['/', '/properties', '/services', '/about', '/contact', '/list-property', '/privacy', '/terms', '/admin'];
+const routes = ['/', '/properties', '/services', '/products', '/geohub', '/about', '/contact', '/list-property', '/privacy', '/terms', '/admin'];
 
 function currentPath() {
   const pathname = window.location.pathname;
@@ -67,6 +67,19 @@ const aboutSlides = [
   { image: publicAsset('images/about-home-interior.jpg'), alt: 'Bright contemporary kitchen and living space' },
 ];
 
+const productGroups = [
+  { number: '01', title: 'Salts', items: ['Fine salt', 'Coarse salt'], copy: 'Everyday and bulk salt options for trade, food-service, and distribution enquiries.' },
+  { number: '02', title: 'Grains & cereals', items: ['Sorghum', 'White maize', 'Yellow maize', 'Wheat grain'], copy: 'Staple grains sourced for dependable supply conversations and market requirements.' },
+  { number: '03', title: 'Legumes & nuts', items: ['Dilobe (Bambara groundnuts)', 'Peanuts', 'Cashew nuts', 'Beans'], copy: 'A practical portfolio of high-demand pulses and nuts for wholesale and commercial buyers.' },
+  { number: '04', title: 'Spices & roots', items: ['Cloves', 'Ginger', 'Turmeric'], copy: 'Aromatic ingredients selected for retail, food preparation, and trade requirements.' },
+  { number: '05', title: 'Fruit & specialty produce', items: ['Soursop'], copy: 'Specialty produce enquiries handled according to availability and requested quantities.' },
+];
+
+const geohubServices = [
+  'Water tests and reporting', 'Environmental impact assessment', 'Pre-drilling borehole advisory', 'Borehole drilling supervision',
+  'Borehole pumping tests', 'Borehole registration', 'Geophysical surveys', 'Geological exploration', 'Land surveying', 'Construction soil testing',
+];
+
 function SilentImageSlider({ images, label }) {
   const [active, setActive] = useState(0);
   useEffect(() => {
@@ -114,6 +127,10 @@ function PageIntro({ eyebrow, title, copy, image }) {
   return <section className="page-intro"><img src={image} alt="" loading="eager" fetchPriority="high" decoding="async" /><div className="page-intro-shade" /><div className="page-intro-copy"><p className="eyebrow light">{eyebrow}</p><h1>{title}</h1><p>{copy}</p></div></section>;
 }
 
+function AdditionalServices({ navigate, compact = false }) {
+  return <section className={`additional-services section${compact ? ' compact' : ''}`} id="additional-services"><div className="section-heading"><p className="eyebrow">More from the group</p><h2>Specialist services beyond property.</h2><p>Explore two additional service areas, each with a dedicated team, clear capabilities, and its own page.</p></div><div className="additional-service-grid"><Link className="additional-service-card products-card" to="/products" onNavigate={navigate}><img src={publicAsset('images/food-products-hero.jpg')} alt="Grains, spices, nuts and food commodities" loading="lazy" decoding="async" /><span>Food & agricultural products</span><h3>Reliable products for trade and supply.</h3><p>Salts, grains, cereals, legumes, nuts, spices, roots, and specialty produce.</p><strong>Explore the portfolio <ArrowRight /></strong></Link><Link className="additional-service-card geohub-card" to="/geohub" onNavigate={navigate}><img src={publicAsset('images/geohub-hero.jpg')} alt="Borehole drilling and geoscience fieldwork" loading="lazy" decoding="async" /><span>GeoHub geoscience consulting</span><h3>Grounded advice from survey to water testing.</h3><p>Borehole advisory, geophysical surveys, environmental assessments, soil tests, and reporting.</p><strong>Explore GeoHub <ArrowRight /></strong></Link></div></section>;
+}
+
 function HomePage({ data, navigate, editMode = false, onEdit }) {
   const featured = data.properties.filter((property) => property.featured).slice(0, 3);
   const properties = featured.length ? featured : data.properties.slice(0, 3);
@@ -129,6 +146,7 @@ function HomePage({ data, navigate, editMode = false, onEdit }) {
       <div className="editorial-copy reveal"><p className="eyebrow">A better first impression</p><h2>Good property deserves good presentation.</h2><p>We bring together considered copy, carefully selected images, and clear listing information so buyers and tenants can understand the opportunity quickly.</p><Link className="text-link" to="/services" onNavigate={navigate}>How we help <ArrowRight size={17} /></Link></div>
     </section>
     {(data.settings.custom_sections || []).map((section) => <section className="custom-content-section section" key={section.id}>{editMode && <EditTrigger label={`Edit ${section.title}`} onClick={() => onEdit({ type: 'section', id: section.id, title: 'Custom section' })} />}<p className="eyebrow">Real Metrics Holdings</p><h2>{section.title}</h2><p>{section.body}</p></section>)}
+    <AdditionalServices navigate={navigate} compact />
     <section className="cta-band reveal"><div><p className="eyebrow light">Have a property to market?</p><h2>Let us present it properly.</h2></div><Link className="light-button" to="/list-property" onNavigate={navigate}>Submit your property <ArrowRight size={18} /></Link></section>
   </main>;
 }
@@ -173,7 +191,32 @@ function ServicesPage({ services, navigate, editMode = false, onEdit }) {
     <section className="service-showcases">{services.map((service, index) => { const detail = serviceDetails[index % serviceDetails.length]; return <article className="service-showcase reveal" key={service.id}>{editMode && <EditTrigger label={`Edit ${service.title}`} className="service-live-edit" onClick={() => onEdit({ type: 'service', id: service.id, title: 'Service content' })} />}<div className="service-showcase-image"><img src={detail.image} alt={`${service.title} service`} loading="lazy" decoding="async" /><span>0{index + 1}</span></div><div className="service-showcase-copy"><div className="service-icon">{serviceIcon(service.icon)}</div><p className="eyebrow">{detail.kicker}</p><h2>{service.title}</h2><p>{service.description}</p><ul>{detail.features.map((feature) => <li key={feature}><Check size={17} />{feature}</li>)}</ul></div></article>; })}</section>
     <section className="process-band"><div className="section-heading reveal"><p className="eyebrow light">Our approach</p><h2>Simple from brief to enquiry.</h2></div><div className="process-grid"><div className="reveal"><strong>01</strong><h3>Share the property</h3><p>Send the details, images, location, price, and availability.</p></div><div className="reveal"><strong>02</strong><h3>We shape the advert</h3><p>We organise the story and present the property with clarity.</p></div><div className="reveal"><strong>03</strong><h3>Reach the market</h3><p>Your campaign goes live with direct paths for serious enquiries.</p></div></div></section>
     <section className="service-assurance section"><div className="section-heading reveal"><p className="eyebrow">Built for confidence</p><h2>Clear information. Human review. Better enquiries.</h2></div><div className="assurance-grid"><article><ShieldCheck /><h3>Reviewed before publishing</h3><p>Every owner-submitted listing enters a private approval queue before it can appear publicly.</p></article><article><ImagePlus /><h3>Gallery-first presentation</h3><p>Images are arranged into responsive slideshows so visitors can explore every property properly.</p></article><article><Mail /><h3>Enquiries stay connected</h3><p>Property context and visitor contact details reach the admin inbox together for useful follow-up.</p></article></div></section>
+    <AdditionalServices navigate={navigate} />
     <section className="cta-band reveal"><div><p className="eyebrow light">Ready to begin?</p><h2>Bring us your next listing.</h2></div><Link className="light-button" to="/list-property" onNavigate={navigate}>List your property <ArrowRight size={18} /></Link></section>
+  </main>;
+}
+
+function FoodProductsPage({ navigate }) {
+  return <main className="venture-page food-products-page">
+    <section className="venture-hero"><img src={publicAsset('images/food-products-hero.jpg')} alt="Food commodities including grains, salts, nuts, spices and soursop" fetchPriority="high" decoding="async" /><div className="venture-hero-shade" /><div className="venture-hero-copy"><p className="eyebrow light">Food & agricultural products</p><h1>Everyday commodities. Carefully brought together.</h1><p>A focused portfolio of salts, staple grains, cereals, legumes, nuts, spices, roots, and specialty produce for commercial and wholesale enquiries.</p><Link className="primary-button" to="/contact" onNavigate={navigate}>Discuss your requirements <ArrowRight /></Link></div></section>
+    <section className="venture-intro section"><div><p className="eyebrow">Our product portfolio</p><h2>From staple grains to distinctive ingredients.</h2></div><p>We connect buyers with a practical range of food and agricultural products. Tell us the product, quantity, preferred specification, and delivery requirement so the team can confirm current availability and next steps.</p></section>
+    <section className="product-portfolio section">{productGroups.map((group) => <article key={group.title}><span>{group.number}</span><h3>{group.title}</h3><p>{group.copy}</p><ul>{group.items.map((item) => <li key={item}><Check size={16} />{item}</li>)}</ul></article>)}</section>
+    <section className="venture-feature"><img src={publicAsset('images/food-grains.jpg')} alt="Sacks of sorghum, maize, wheat, beans, peanuts and cashews" loading="lazy" decoding="async" /><div><p className="eyebrow">Staple supply</p><h2>Grains, legumes, and nuts for real market needs.</h2><p>Our core portfolio covers widely used staples alongside versatile legumes and nuts. Enquiries can be shaped around product type, volume, intended use, and delivery expectations.</p><ul><li><Check />Clear product and quantity briefs</li><li><Check />Wholesale and commercial enquiries</li><li><Check />Availability confirmed before commitment</li></ul></div></section>
+    <section className="venture-feature reverse"><img src={publicAsset('images/food-spices.jpg')} alt="Salt, cloves, ginger, turmeric and soursop" loading="lazy" decoding="async" /><div><p className="eyebrow">Distinctive ingredients</p><h2>Flavor, function, and specialty produce.</h2><p>Fine and coarse salt sit alongside cloves, ginger, turmeric, and soursop to create a balanced range for food-service, retail, and specialist supply conversations.</p><Link className="text-link" to="/contact" onNavigate={navigate}>Request product information <ArrowRight /></Link></div></section>
+    <section className="venture-steps section"><div><span>01</span><h3>Share your brief</h3><p>Specify the products, quantities, grade or format, and intended destination.</p></div><div><span>02</span><h3>Confirm availability</h3><p>The team reviews the requirement and confirms what can be supplied.</p></div><div><span>03</span><h3>Coordinate next steps</h3><p>Pricing, timing, and fulfilment details are discussed before commitment.</p></div></section>
+    <section className="cta-band"><div><p className="eyebrow light">Product enquiry</p><h2>Tell us what you need to source.</h2></div><Link className="light-button" to="/contact" onNavigate={navigate}>Start an enquiry <ArrowRight /></Link></section>
+  </main>;
+}
+
+function GeoHubPage({ navigate }) {
+  return <main className="venture-page geohub-page">
+    <section className="venture-hero geohub-venture-hero"><img src={publicAsset('images/geohub-hero.jpg')} alt="Borehole drilling rig operating in a southern African landscape" fetchPriority="high" decoding="async" /><div className="venture-hero-shade" /><div className="venture-hero-copy"><p className="eyebrow light">GeoHub · Solid geoscience solutions</p><h1>Know the ground before you build, drill, or invest.</h1><p>Geoscience consulting and borehole advisory for farmers, mines, infrastructure teams, and construction projects across Botswana.</p><a className="primary-button" href="mailto:info@geohub.co.bw">Contact GeoHub <ArrowRight /></a></div></section>
+    <section className="geohub-intro section"><div><p className="eyebrow">Technical services</p><h2>Field insight translated into practical decisions.</h2><p>GeoHub brings together groundwater, geological, environmental, surveying, and construction-ground services in one clear technical offering.</p></div><aside><strong>Mobile enquiries</strong><a href="tel:+26772633424">+267 72 633 424</a><strong>Email</strong><a href="mailto:info@geohub.co.bw">info@geohub.co.bw</a><strong>Website</strong><a href="https://www.geohub.co.bw" target="_blank" rel="noopener noreferrer">www.geohub.co.bw</a></aside></section>
+    <section className="geohub-service-grid section">{geohubServices.map((service, index) => <article key={service}><span>{String(index + 1).padStart(2, '0')}</span><h3>{service}</h3></article>)}</section>
+    <section className="venture-feature geohub-feature"><img src={publicAsset('images/geohub-geophysical.jpg')} alt="Geophysical survey equipment across exposed terrain" loading="lazy" decoding="async" /><div><p className="eyebrow">Survey before drilling</p><h2>Better subsurface understanding, fewer blind decisions.</h2><p>Geophysical surveys and pre-drilling advisory help clients assess site conditions, target groundwater investigations, and plan field activity with stronger evidence.</p><ul><li><Check />Geophysical survey planning</li><li><Check />Pre-drilling borehole advisory</li><li><Check />Geological exploration support</li><li><Check />Land surveying coordination</li></ul></div></section>
+    <section className="venture-feature reverse geohub-feature"><img src={publicAsset('images/geohub-water-testing.jpg')} alt="Borehole water sampling and field testing equipment" loading="lazy" decoding="async" /><div><p className="eyebrow">Water and borehole assurance</p><h2>Testing, supervision, and reporting from field to handover.</h2><p>From drilling supervision to pumping tests, water testing, reporting, and registration, GeoHub supports the technical steps that turn a borehole project into a documented asset.</p><ul><li><Check />Drilling supervision and pumping tests</li><li><Check />Water tests and reporting</li><li><Check />Borehole registration support</li></ul></div></section>
+    <section className="geohub-audiences section"><p className="eyebrow light">Who we support</p><h2>Technical clarity for land, water, and construction decisions.</h2><div><span>Farmers & landowners</span><span>Mines & exploration teams</span><span>Infrastructure projects</span><span>Construction professionals</span></div></section>
+    <section className="cta-band geohub-cta"><div><p className="eyebrow light">Plan with evidence</p><h2>Bring GeoHub into the project early.</h2></div><a className="light-button" href="mailto:info@geohub.co.bw">Request a consultation <ArrowRight /></a></section>
   </main>;
 }
 
@@ -324,7 +367,7 @@ function Header({ path, navigate }) {
 }
 
 function Footer({ settings, navigate, editMode = false, onEdit }) {
-  return <footer className="site-footer">{editMode && <EditTrigger label="Edit contact details" className="footer-live-edit" onClick={() => onEdit({ type: 'settings', title: 'Contact details', fields: [{ key: 'email', label: 'Email' }, { key: 'phone', label: 'Phone' }, { key: 'address', label: 'Address' }] })} />}<div className="footer-main"><div className="footer-brand"><img src={publicAsset('real-metrics-logo-transparent.png')} alt="Real Metrics Holdings" loading="lazy" decoding="async" /><p>Professional property advertising and listing presentation across Botswana.</p></div><div className="footer-links"><h3>Company</h3><Link to="/about" onNavigate={navigate}>About</Link><Link to="/services" onNavigate={navigate}>Services</Link><Link to="/properties" onNavigate={navigate}>Properties</Link><Link to="/list-property" onNavigate={navigate}>List a property</Link></div><div className="footer-links"><h3>Legal</h3><Link to="/privacy" onNavigate={navigate}>Privacy notice</Link><Link to="/terms" onNavigate={navigate}>Terms of service</Link></div><div className="footer-links"><h3>Contact</h3><a href={`mailto:${settings.email}`}>{settings.email}</a><a href={`tel:${settings.phone.replaceAll(' ', '')}`}>{settings.phone}</a><span>{settings.address}</span></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Real Metrics Holdings</span><a href="https://futurifydesigns.com" target="_blank" rel="noopener noreferrer">Built by Futurify Designs</a></div></footer>;
+  return <footer className="site-footer">{editMode && <EditTrigger label="Edit contact details" className="footer-live-edit" onClick={() => onEdit({ type: 'settings', title: 'Contact details', fields: [{ key: 'email', label: 'Email' }, { key: 'phone', label: 'Phone' }, { key: 'address', label: 'Address' }] })} />}<div className="footer-main"><div className="footer-brand"><img src={publicAsset('real-metrics-logo-transparent.png')} alt="Real Metrics Holdings" loading="lazy" decoding="async" /><p>Professional property advertising and listing presentation across Botswana.</p></div><div className="footer-links"><h3>Company</h3><Link to="/about" onNavigate={navigate}>About</Link><Link to="/services" onNavigate={navigate}>Services</Link><Link to="/products" onNavigate={navigate}>Food products</Link><Link to="/geohub" onNavigate={navigate}>GeoHub</Link><Link to="/properties" onNavigate={navigate}>Properties</Link><Link to="/list-property" onNavigate={navigate}>List a property</Link></div><div className="footer-links"><h3>Legal</h3><Link to="/privacy" onNavigate={navigate}>Privacy notice</Link><Link to="/terms" onNavigate={navigate}>Terms of service</Link></div><div className="footer-links"><h3>Contact</h3><a href={`mailto:${settings.email}`}>{settings.email}</a><a href={`tel:${settings.phone.replaceAll(' ', '')}`}>{settings.phone}</a><span>{settings.address}</span></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Real Metrics Holdings</span><a href="https://futurifydesigns.com" target="_blank" rel="noopener noreferrer">Built by Futurify Designs</a></div></footer>;
 }
 
 function App() {
@@ -334,6 +377,13 @@ function App() {
   const [liveAuthorized, setLiveAuthorized] = useState(false);
   const [editor, setEditor] = useState(null);
   useEffect(() => { loadCmsData().then(setData); }, []);
+  useEffect(() => {
+    const titles = {
+      '/products': 'Food & Agricultural Products | Real Metrics Holdings',
+      '/geohub': 'GeoHub Geoscience Consulting | Real Metrics Holdings',
+    };
+    document.title = titles[path] || 'Real Metrics Holdings | Real Estate Advertising';
+  }, [path]);
   useEffect(() => {
     if (!liveEditing || !hasSupabase) return;
     supabase.auth.getSession().then(({ data: authData }) => setLiveAuthorized(authData.session?.user?.email?.toLowerCase() === 'info@realmetricsholdings.com'));
@@ -369,6 +419,8 @@ function App() {
       return property ? <PropertyDetailsPage property={property} navigate={navigate} editMode={editMode} onEdit={setEditor} /> : <PropertiesPage properties={data.properties} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
     }
     if (path === '/services') return <ServicesPage services={data.services} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
+    if (path === '/products') return <FoodProductsPage navigate={navigate} />;
+    if (path === '/geohub') return <GeoHubPage navigate={navigate} />;
     if (path === '/about') return <AboutPage settings={data.settings} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
     if (path === '/contact') {
       const propertyId = new URLSearchParams(window.location.search).get('property');

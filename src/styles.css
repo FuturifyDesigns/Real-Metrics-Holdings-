@@ -292,6 +292,73 @@ cite span { color:var(--muted); font-weight:400; }
 .submission-message { margin:0; padding:13px 15px; color:var(--red-dark); background:#fff0f0; border-radius:4px; font-weight:700; }
 .submission-message.success { color:#1f6b38; background:#ecf8f0; }
 
+.additional-services { background:#f7f6f3; }
+.additional-services.compact { background:white; }
+.additional-service-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; }
+.additional-service-card { position:relative; min-height:500px; overflow:hidden; display:flex; align-items:flex-start; justify-content:flex-end; flex-direction:column; padding:34px; color:white; border-radius:12px; box-shadow:var(--shadow); }
+.additional-service-card::after { content:""; position:absolute; inset:0; background:linear-gradient(0deg,rgba(7,7,9,.9),rgba(7,7,9,.08) 74%); }
+.additional-service-card img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform .7s ease; }
+.additional-service-card:hover img { transform:scale(1.035); }
+.additional-service-card>*:not(img) { position:relative; z-index:1; }
+.additional-service-card>span { color:#ff868b; font-size:.76rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; }
+.additional-service-card h3 { max-width:620px; margin:10px 0; font-family:'Libre Baskerville',serif; font-size:clamp(1.7rem,3vw,3rem); line-height:1.12; }
+.additional-service-card p { max-width:600px; margin:0 0 18px; color:rgba(255,255,255,.78); line-height:1.6; }
+.additional-service-card strong { display:flex; align-items:center; gap:8px; }
+
+.venture-hero { min-height:680px; position:relative; display:flex; align-items:flex-end; overflow:hidden; padding:150px clamp(18px,6vw,92px) 78px; color:white; }
+.venture-hero>img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.venture-hero-shade { position:absolute; inset:0; background:linear-gradient(90deg,rgba(8,8,10,.86),rgba(8,8,10,.36) 62%,rgba(8,8,10,.08)),linear-gradient(0deg,rgba(8,8,10,.55),transparent 55%); }
+.venture-hero-copy { position:relative; z-index:1; width:min(820px,100%); }
+.venture-hero-copy h1 { margin:0; font-size:clamp(3rem,6vw,6.4rem); line-height:.98; }
+.venture-hero-copy>p:not(.eyebrow) { max-width:700px; margin:22px 0 28px; color:rgba(255,255,255,.84); font-size:1.12rem; line-height:1.7; }
+.food-products-page .venture-hero-copy { width:min(900px,100%); }
+.food-products-page .eyebrow { color:#a96820; }
+.food-products-page .eyebrow.light { color:#ffc979; }
+.venture-intro { display:grid; grid-template-columns:1.05fr .95fr; gap:clamp(35px,8vw,120px); align-items:end; }
+.venture-intro h2,.geohub-intro h2 { margin:0; font-size:clamp(2.3rem,4.5vw,4.8rem); line-height:1.08; }
+.venture-intro>p,.geohub-intro>div>p { margin:0; color:var(--muted); font-size:1.04rem; line-height:1.8; }
+.product-portfolio { padding-top:12px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.product-portfolio article { min-height:360px; padding:28px; border:1px solid #ded8ce; border-radius:10px; background:#fbf7f0; }
+.product-portfolio article>span,.venture-steps span,.geohub-service-grid span { color:#a96820; font-weight:700; letter-spacing:.08em; }
+.product-portfolio h3 { margin:34px 0 10px; font-family:'Libre Baskerville',serif; font-size:1.6rem; }
+.product-portfolio p { min-height:78px; color:var(--muted); line-height:1.65; }
+.product-portfolio ul,.venture-feature ul { display:grid; gap:10px; margin:20px 0 0; padding:18px 0 0; border-top:1px solid #ddd4c5; list-style:none; }
+.product-portfolio li,.venture-feature li { display:flex; align-items:center; gap:9px; }
+.product-portfolio li svg,.venture-feature li svg { flex:0 0 auto; color:var(--red); }
+.venture-feature { min-height:580px; display:grid; grid-template-columns:1fr 1fr; background:#f4f1eb; }
+.venture-feature>img { width:100%; height:100%; min-height:580px; object-fit:cover; }
+.venture-feature>div { align-self:center; padding:clamp(42px,7vw,100px); }
+.venture-feature.reverse>img { order:2; }
+.venture-feature h2 { margin:0; font-size:clamp(2.2rem,4vw,4.4rem); line-height:1.08; }
+.venture-feature>div>p:not(.eyebrow) { color:var(--muted); line-height:1.8; }
+.venture-steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.venture-steps>div { padding:28px; border-left:3px solid #a96820; background:#fbf7f0; }
+.venture-steps h3 { margin:28px 0 8px; font-family:'Libre Baskerville',serif; font-size:1.35rem; }
+.venture-steps p { color:var(--muted); line-height:1.65; }
+
+.geohub-page { --geo-accent:#d94731; --geo-dark:#101720; }
+.geohub-venture-hero { min-height:720px; }
+.geohub-venture-hero .venture-hero-shade { background:linear-gradient(90deg,rgba(9,16,24,.92),rgba(9,16,24,.38) 70%,rgba(9,16,24,.12)); }
+.geohub-page .eyebrow { color:var(--geo-accent); }
+.geohub-page .eyebrow.light { color:#ff8c79; }
+.geohub-page .primary-button { background:var(--geo-accent); }
+.geohub-intro { display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:clamp(40px,8vw,120px); background:white; }
+.geohub-intro>div>p { margin-top:24px; }
+.geohub-intro aside { display:grid; align-content:start; gap:7px; padding:26px; color:white; background:var(--geo-dark); border-radius:8px; }
+.geohub-intro aside strong { margin-top:10px; color:#ff8c79; font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; }
+.geohub-intro aside a { font-size:1.08rem; font-weight:700; overflow-wrap:anywhere; }
+.geohub-service-grid { padding-top:10px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1px; background:#d7dce0; }
+.geohub-service-grid article { min-height:125px; display:grid; grid-template-columns:52px 1fr; align-items:center; gap:16px; padding:22px 26px; background:#f3f5f6; }
+.geohub-service-grid span { color:var(--geo-accent); }
+.geohub-service-grid h3 { margin:0; font-family:'Libre Baskerville',serif; font-size:1.18rem; }
+.geohub-feature { background:#e9edef; }
+.geohub-feature ul { border-color:#cbd2d7; }
+.geohub-audiences { color:white; background:var(--geo-dark); text-align:center; }
+.geohub-audiences h2 { width:min(900px,100%); margin:0 auto 34px; font-size:clamp(2.2rem,4.2vw,4.5rem); }
+.geohub-audiences>div { display:flex; justify-content:center; flex-wrap:wrap; gap:9px; }
+.geohub-audiences span { padding:13px 18px; border:1px solid rgba(255,255,255,.2); border-radius:28px; }
+.geohub-cta { background:var(--geo-accent); }
+
 .site-footer { position:relative; color:rgba(255,255,255,.7); background:#0d0d0f; border-top:1px solid #242428; }
 .footer-live-edit { top:18px; right:clamp(18px,6vw,92px); }
 .editable-page-intro,.custom-content-section { position:relative; }
@@ -491,6 +558,15 @@ cite span { color:var(--muted); font-weight:400; }
   .property-details { grid-template-columns:1fr; }
   .property-enquiry-card { position:static; }
   .submission-intro { position:static; }
+  .additional-service-grid,.venture-intro,.venture-feature,.geohub-intro { grid-template-columns:1fr; }
+  .additional-service-card { min-height:440px; padding:26px; }
+  .venture-hero { min-height:620px; padding:130px 20px 58px; }
+  .venture-hero-copy h1 { font-size:clamp(2.8rem,11vw,4.8rem); }
+  .product-portfolio { grid-template-columns:1fr 1fr; }
+  .venture-feature.reverse>img { order:0; }
+  .venture-feature>img { min-height:390px; }
+  .venture-steps { grid-template-columns:1fr; }
+  .geohub-service-grid { grid-template-columns:1fr; }
   .footer-main { grid-template-columns:1fr; justify-items:center; text-align:center; }
   .footer-main .footer-links:last-child { grid-column:auto; }
   .footer-brand { display:grid; justify-items:center; }
@@ -533,6 +609,10 @@ cite span { color:var(--muted); font-weight:400; }
   .property-gallery-main { aspect-ratio:1.1; }
   .property-thumbnails { padding-left:12px; padding-right:12px; }
   .property-detail-meta { grid-template-columns:1fr; }
+  .product-portfolio { grid-template-columns:1fr; }
+  .product-portfolio article { min-height:0; }
+  .product-portfolio p { min-height:0; }
+  .venture-feature>div { padding:48px 20px; }
   .admin-shell { padding:15px; }
   .admin-top h1 { font-size:2.25rem; }
   .admin-actions>* { flex:1; }
