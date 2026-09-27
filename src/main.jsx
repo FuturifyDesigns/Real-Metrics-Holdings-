@@ -13,7 +13,7 @@ import './styles.css';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const publicAsset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
-const routes = ['/', '/properties', '/services', '/products', '/geohub', '/about', '/contact', '/list-property', '/privacy', '/terms', '/admin'];
+const routes = ['/', '/properties', '/services', '/products', '/products/enquire', '/geohub', '/about', '/contact', '/list-property', '/privacy', '/terms', '/admin'];
 
 function currentPath() {
   const pathname = window.location.pathname;
@@ -76,8 +76,16 @@ const productGroups = [
 ];
 
 const geohubServices = [
-  'Water tests and reporting', 'Environmental impact assessment', 'Pre-drilling borehole advisory', 'Borehole drilling supervision',
-  'Borehole pumping tests', 'Borehole registration', 'Geophysical surveys', 'Geological exploration', 'Land surveying', 'Construction soil testing',
+  { title: 'Water tests and reporting', image: 'geohub-water-testing.jpg', alt: 'Borehole water samples and field testing equipment', copy: 'Field sampling and clear reporting help clients understand water quality and make informed decisions about use, treatment, and ongoing monitoring.' },
+  { title: 'Environmental impact assessment', image: 'geohub-environmental-impact.jpg', alt: 'Environmental assessment equipment beside a marked drainage area', copy: 'Site conditions, environmental sensitivities, and potential project effects are reviewed so risks can be identified before work begins.' },
+  { title: 'Pre-drilling borehole advisory', image: 'geohub-predrilling.jpg', alt: 'Site maps, GPS equipment and survey markers at a proposed borehole location', copy: 'Available geological and geophysical evidence is considered before drilling to support practical siting, scope, and contractor discussions.' },
+  { title: 'Borehole drilling supervision', image: 'geohub-hero.jpg', alt: 'Borehole drilling rig operating in open terrain', copy: 'Technical oversight during drilling helps document progress, monitor the encountered ground, and keep the work aligned with the agreed programme.' },
+  { title: 'Borehole pumping tests', image: 'geohub-pumping-test.jpg', alt: 'Borehole pumping test with discharge channel and pressure gauge', copy: 'Controlled pumping and recovery observations are used to assess borehole performance and provide evidence for sustainable operating decisions.' },
+  { title: 'Borehole registration', image: 'geohub-registration.jpg', alt: 'Completed and protected borehole headworks', copy: 'Project records and supporting information are organised to assist clients with the applicable borehole registration and documentation process.' },
+  { title: 'Geophysical surveys', image: 'geohub-geophysical.jpg', alt: 'Geophysical survey instruments positioned across exposed ground', copy: 'Non-invasive field measurements help investigate subsurface conditions and guide groundwater, geological, and development planning.' },
+  { title: 'Geological exploration', image: 'geohub-geological-exploration.jpg', alt: 'Rock core samples and geological field instruments', copy: 'Field observations, sampling, and geological interpretation support early-stage exploration and a stronger understanding of the project area.' },
+  { title: 'Land surveying', image: 'geohub-land-surveying.jpg', alt: 'Total station and survey prism at a marked development site', copy: 'Accurate site measurements and setting-out information give landowners and project teams a dependable spatial basis for planning and construction.' },
+  { title: 'Construction soil testing', image: 'geohub-soil-testing.jpg', alt: 'Soil testing apparatus and an exposed construction-site soil profile', copy: 'Ground and material testing provides practical information about site soils to support earthworks, foundations, and construction quality decisions.' },
 ];
 
 function SilentImageSlider({ images, label }) {
@@ -198,13 +206,13 @@ function ServicesPage({ services, navigate, editMode = false, onEdit }) {
 
 function FoodProductsPage({ navigate }) {
   return <main className="venture-page food-products-page">
-    <section className="venture-hero"><img src={publicAsset('images/food-products-hero.jpg')} alt="Food commodities including grains, salts, nuts, spices and soursop" fetchPriority="high" decoding="async" /><div className="venture-hero-shade" /><div className="venture-hero-copy"><p className="eyebrow light">Food & agricultural products</p><h1>Everyday commodities. Carefully brought together.</h1><p>A focused portfolio of salts, staple grains, cereals, legumes, nuts, spices, roots, and specialty produce for commercial and wholesale enquiries.</p><Link className="primary-button" to="/contact" onNavigate={navigate}>Discuss your requirements <ArrowRight /></Link></div></section>
+    <section className="venture-hero"><img src={publicAsset('images/food-products-hero.jpg')} alt="Food commodities including grains, salts, nuts, spices and soursop" fetchPriority="high" decoding="async" /><div className="venture-hero-shade" /><div className="venture-hero-copy"><p className="eyebrow light">Food & agricultural products</p><h1>Everyday commodities. Carefully brought together.</h1><p>A focused portfolio of salts, staple grains, cereals, legumes, nuts, spices, roots, and specialty produce for commercial and wholesale enquiries.</p><Link className="primary-button" to="/products/enquire" onNavigate={navigate}>Discuss your requirements <ArrowRight /></Link></div></section>
     <section className="venture-intro section"><div><p className="eyebrow">Our product portfolio</p><h2>From staple grains to distinctive ingredients.</h2></div><p>We connect buyers with a practical range of food and agricultural products. Tell us the product, quantity, preferred specification, and delivery requirement so the team can confirm current availability and next steps.</p></section>
     <section className="product-portfolio section">{productGroups.map((group) => <article key={group.title}><span>{group.number}</span><h3>{group.title}</h3><p>{group.copy}</p><ul>{group.items.map((item) => <li key={item}><Check size={16} />{item}</li>)}</ul></article>)}</section>
     <section className="venture-feature"><img src={publicAsset('images/food-grains.jpg')} alt="Sacks of sorghum, maize, wheat, beans, peanuts and cashews" loading="lazy" decoding="async" /><div><p className="eyebrow">Staple supply</p><h2>Grains, legumes, and nuts for real market needs.</h2><p>Our core portfolio covers widely used staples alongside versatile legumes and nuts. Enquiries can be shaped around product type, volume, intended use, and delivery expectations.</p><ul><li><Check />Clear product and quantity briefs</li><li><Check />Wholesale and commercial enquiries</li><li><Check />Availability confirmed before commitment</li></ul></div></section>
-    <section className="venture-feature reverse"><img src={publicAsset('images/food-spices.jpg')} alt="Salt, cloves, ginger, turmeric and soursop" loading="lazy" decoding="async" /><div><p className="eyebrow">Distinctive ingredients</p><h2>Flavor, function, and specialty produce.</h2><p>Fine and coarse salt sit alongside cloves, ginger, turmeric, and soursop to create a balanced range for food-service, retail, and specialist supply conversations.</p><Link className="text-link" to="/contact" onNavigate={navigate}>Request product information <ArrowRight /></Link></div></section>
+    <section className="venture-feature reverse"><img src={publicAsset('images/food-spices.jpg')} alt="Salt, cloves, ginger, turmeric and soursop" loading="lazy" decoding="async" /><div><p className="eyebrow">Distinctive ingredients</p><h2>Flavor, function, and specialty produce.</h2><p>Fine and coarse salt sit alongside cloves, ginger, turmeric, and soursop to create a balanced range for food-service, retail, and specialist supply conversations.</p><Link className="text-link" to="/products/enquire" onNavigate={navigate}>Request product information <ArrowRight /></Link></div></section>
     <section className="venture-steps section"><div><span>01</span><h3>Share your brief</h3><p>Specify the products, quantities, grade or format, and intended destination.</p></div><div><span>02</span><h3>Confirm availability</h3><p>The team reviews the requirement and confirms what can be supplied.</p></div><div><span>03</span><h3>Coordinate next steps</h3><p>Pricing, timing, and fulfilment details are discussed before commitment.</p></div></section>
-    <section className="cta-band"><div><p className="eyebrow light">Product enquiry</p><h2>Tell us what you need to source.</h2></div><Link className="light-button" to="/contact" onNavigate={navigate}>Start an enquiry <ArrowRight /></Link></section>
+    <section className="cta-band"><div><p className="eyebrow light">Product enquiry</p><h2>Tell us what you need to source.</h2></div><Link className="light-button" to="/products/enquire" onNavigate={navigate}>Start an enquiry <ArrowRight /></Link></section>
   </main>;
 }
 
@@ -212,7 +220,7 @@ function GeoHubPage({ navigate }) {
   return <main className="venture-page geohub-page">
     <section className="venture-hero geohub-venture-hero"><img src={publicAsset('images/geohub-hero.jpg')} alt="Borehole drilling rig operating in a southern African landscape" fetchPriority="high" decoding="async" /><div className="venture-hero-shade" /><div className="venture-hero-copy"><p className="eyebrow light">GeoHub · Solid geoscience solutions</p><h1>Know the ground before you build, drill, or invest.</h1><p>Geoscience consulting and borehole advisory for farmers, mines, infrastructure teams, and construction projects across Botswana.</p><a className="primary-button" href="mailto:info@geohub.co.bw">Contact GeoHub <ArrowRight /></a></div></section>
     <section className="geohub-intro section"><div><p className="eyebrow">Technical services</p><h2>Field insight translated into practical decisions.</h2><p>GeoHub brings together groundwater, geological, environmental, surveying, and construction-ground services in one clear technical offering.</p></div><aside><strong>Mobile enquiries</strong><a href="tel:+26772633424">+267 72 633 424</a><strong>Email</strong><a href="mailto:info@geohub.co.bw">info@geohub.co.bw</a><strong>Website</strong><a href="https://www.geohub.co.bw" target="_blank" rel="noopener noreferrer">www.geohub.co.bw</a></aside></section>
-    <section className="geohub-service-grid section">{geohubServices.map((service, index) => <article key={service}><span>{String(index + 1).padStart(2, '0')}</span><h3>{service}</h3></article>)}</section>
+    <section className="geohub-service-grid section">{geohubServices.map((service, index) => <article key={service.title}><img src={publicAsset(`images/${service.image}`)} alt={service.alt} loading="lazy" decoding="async" /><div><span>{String(index + 1).padStart(2, '0')}</span><h3>{service.title}</h3><p>{service.copy}</p></div></article>)}</section>
     <section className="venture-feature geohub-feature"><img src={publicAsset('images/geohub-geophysical.jpg')} alt="Geophysical survey equipment across exposed terrain" loading="lazy" decoding="async" /><div><p className="eyebrow">Survey before drilling</p><h2>Better subsurface understanding, fewer blind decisions.</h2><p>Geophysical surveys and pre-drilling advisory help clients assess site conditions, target groundwater investigations, and plan field activity with stronger evidence.</p><ul><li><Check />Geophysical survey planning</li><li><Check />Pre-drilling borehole advisory</li><li><Check />Geological exploration support</li><li><Check />Land surveying coordination</li></ul></div></section>
     <section className="venture-feature reverse geohub-feature"><img src={publicAsset('images/geohub-water-testing.jpg')} alt="Borehole water sampling and field testing equipment" loading="lazy" decoding="async" /><div><p className="eyebrow">Water and borehole assurance</p><h2>Testing, supervision, and reporting from field to handover.</h2><p>From drilling supervision to pumping tests, water testing, reporting, and registration, GeoHub supports the technical steps that turn a borehole project into a documented asset.</p><ul><li><Check />Drilling supervision and pumping tests</li><li><Check />Water tests and reporting</li><li><Check />Borehole registration support</li></ul></div></section>
     <section className="geohub-audiences section"><p className="eyebrow light">Who we support</p><h2>Technical clarity for land, water, and construction decisions.</h2><div><span>Farmers & landowners</span><span>Mines & exploration teams</span><span>Infrastructure projects</span><span>Construction professionals</span></div></section>
@@ -228,6 +236,52 @@ function AboutPage({ settings, navigate, editMode = false, onEdit }) {
     <section className="about-principles section"><div><span>Botswana focused</span><p>Built around the local property market, its owners, professionals, buyers, and tenants.</p></div><div><span>Human reviewed</span><p>Every submitted listing is checked before publication to protect quality and trust.</p></div><div><span>Detail led</span><p>Strong images and accurate information work together to help people decide with confidence.</p></div></section>
     <section className="values-band"><article className="reveal"><ShieldCheck /><h3>Clear information</h3><p>Every campaign makes price, status, location, and key property details easy to understand.</p></article><article className="reveal"><Check /><h3>Considered presentation</h3><p>Photography and copy work together without overstatement or unnecessary noise.</p></article><article className="reveal"><MapPin /><h3>Botswana focused</h3><p>Our platform is shaped around the local property market and the people moving through it.</p></article></section>
     <section className="cta-band reveal"><div><p className="eyebrow light">A property worth presenting?</p><h2>Give it a clearer place in the market.</h2></div><Link className="light-button" to="/list-property" onNavigate={navigate}>Submit a property <ArrowRight size={18} /></Link></section>
+  </main>;
+}
+
+function ProductEnquiryPage({ settings, navigate }) {
+  const [submitting, setSubmitting] = useState(false);
+  const [formMessage, setFormMessage] = useState('');
+  const submit = async (event) => {
+    event.preventDefault();
+    setSubmitting(true); setFormMessage('');
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const name = String(form.get('name')).trim();
+    const email = String(form.get('email')).trim().toLowerCase();
+    const phone = String(form.get('phone')).trim();
+    const organisation = String(form.get('organisation')).trim();
+    const product = String(form.get('product')).trim();
+    const quantity = String(form.get('quantity')).trim();
+    const destination = String(form.get('destination')).trim();
+    const notes = String(form.get('message')).trim();
+    const message = `Product: ${product}\nQuantity / volume: ${quantity}\nDelivery destination: ${destination}\nOrganisation: ${organisation || 'Not provided'}\n\nAdditional requirements:\n${notes}`;
+    try {
+      if (!hasSupabase) throw new Error('Online enquiries are temporarily unavailable. Please email us directly.');
+      const { error } = await supabase.rpc('submit_contact_inquiry', {
+        p_name: name,
+        p_email: email,
+        p_phone: phone,
+        p_inquiry_type: 'Food product enquiry',
+        p_property_id: null,
+        p_property_title: `Product enquiry: ${product}`,
+        p_message: message,
+        p_privacy_consent: form.get('privacy_consent') === 'on',
+        p_honeypot: String(form.get('company_website') || ''),
+      });
+      if (error) throw error;
+      setFormMessage('Your product enquiry has been saved. Your email application is opening with the details ready to send.');
+      const subject = encodeURIComponent(`Food product enquiry: ${product} from ${name}`);
+      const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\nPhone: ${phone}\n\n${message}`);
+      window.location.href = `mailto:${settings.email}?subject=${subject}&body=${body}`;
+      formElement.reset();
+    } catch (error) {
+      setFormMessage(error.message || 'We could not save your enquiry. Please try again.');
+    } finally { setSubmitting(false); }
+  };
+  return <main className="product-enquiry-page">
+    <section className="product-enquiry-hero"><img src={publicAsset('images/food-products-hero.jpg')} alt="Grains, pulses, nuts, spices and specialty produce" fetchPriority="high" decoding="async" /><div><p className="eyebrow light">Food & agricultural products</p><h1>Tell us what you need.</h1><p>This enquiry is handled separately from property requests. Share the product, quantity, specification, and destination so the supply team can review your requirement.</p></div></section>
+    <section className="contact-page product-enquiry-content section"><div className="contact-details reveal"><Link className="back-link" to="/products" onNavigate={navigate}>← Back to product portfolio</Link><p className="eyebrow">Product enquiry</p><h2>A clearer brief gets a faster answer.</h2><p>Please provide realistic quantities and any required grade, packaging, delivery date, or destination information. Availability and commercial terms are confirmed before any commitment.</p><img className="product-enquiry-side-image" src={publicAsset('images/food-grains.jpg')} alt="Sacks containing grains, legumes and nuts" loading="lazy" decoding="async" /><a href={`mailto:${settings.email}`}><Mail /><span><small>Email</small>{settings.email}</span></a><a href={`tel:${settings.phone.replaceAll(' ', '')}`}><Phone /><span><small>Phone</small>{settings.phone}</span></a></div><form className="contact-form product-enquiry-form reveal" onSubmit={submit}><label className="honeypot" aria-hidden="true">Company website<input name="company_website" tabIndex="-1" autoComplete="off" /></label><label>Your name *<input name="name" autoComplete="name" minLength="2" maxLength="80" required /></label><label>Organisation<input name="organisation" autoComplete="organization" maxLength="120" /></label><label>Email address *<input name="email" type="email" autoComplete="email" maxLength="120" required /></label><label>Phone number *<input name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[+0-9][0-9 ()-]{6,19}" title="Enter a valid phone number using digits, spaces, brackets, + or -." required /></label><label>Product required *<select name="product" defaultValue="" required><option value="" disabled>Select a product</option>{productGroups.flatMap((group) => group.items).map((item) => <option key={item}>{item}</option>)}<option>Multiple products</option></select></label><label>Quantity or volume *<input name="quantity" maxLength="100" placeholder="e.g. 20 tonnes or 100 × 25 kg bags" required /></label><label className="wide">Delivery destination *<input name="destination" maxLength="160" placeholder="Town, district, or country" required /></label><label className="wide">Specifications and additional requirements *<textarea name="message" rows="7" minLength="20" maxLength="1500" placeholder="Tell us about grade, packaging, preferred delivery timing, intended use, or the mix of products required." required /></label><label className="consent-row wide"><input name="privacy_consent" type="checkbox" required /><span>I agree to the processing of my information as explained in the <a href={`${basePath}/privacy`} target="_blank" rel="noopener noreferrer">Privacy Notice</a> and accept the <a href={`${basePath}/terms`} target="_blank" rel="noopener noreferrer">Terms of Service</a>. *</span></label><button className="primary-button" type="submit" disabled={submitting}>{submitting ? 'Saving enquiry…' : 'Send product enquiry'} <Send size={17} /></button>{formMessage && <p className="contact-form-message wide" role="status">{formMessage}</p>}</form></section>
   </main>;
 }
 
@@ -380,6 +434,7 @@ function App() {
   useEffect(() => {
     const titles = {
       '/products': 'Food & Agricultural Products | Real Metrics Holdings',
+      '/products/enquire': 'Food Product Enquiry | Real Metrics Holdings',
       '/geohub': 'GeoHub Geoscience Consulting | Real Metrics Holdings',
     };
     document.title = titles[path] || 'Real Metrics Holdings | Real Estate Advertising';
@@ -420,6 +475,7 @@ function App() {
     }
     if (path === '/services') return <ServicesPage services={data.services} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
     if (path === '/products') return <FoodProductsPage navigate={navigate} />;
+    if (path === '/products/enquire') return <ProductEnquiryPage settings={data.settings} navigate={navigate} />;
     if (path === '/geohub') return <GeoHubPage navigate={navigate} />;
     if (path === '/about') return <AboutPage settings={data.settings} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
     if (path === '/contact') {
