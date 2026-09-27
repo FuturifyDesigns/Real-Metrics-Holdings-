@@ -12,12 +12,14 @@ create table if not exists public.site_settings (
   about_title text not null default 'Property presentation with a local point of view.',
   about_body text not null default 'We started Real Metrics Holdings to give Botswana property a more considered place in the market. Each listing is shaped to feel clear, credible, and worth someone''s time.',
   contact_intro text not null default 'Whether you are selling, letting, or launching a development, tell us what you need to bring to market.',
+  custom_sections jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now()
 );
 
 alter table public.site_settings add column if not exists about_title text not null default 'Property presentation with a local point of view.';
 alter table public.site_settings add column if not exists about_body text not null default 'We started Real Metrics Holdings to give Botswana property a more considered place in the market. Each listing is shaped to feel clear, credible, and worth someone''s time.';
 alter table public.site_settings add column if not exists contact_intro text not null default 'Whether you are selling, letting, or launching a development, tell us what you need to bring to market.';
+alter table public.site_settings add column if not exists custom_sections jsonb not null default '[]'::jsonb;
 
 create table if not exists public.properties (
   id uuid primary key default gen_random_uuid(),
@@ -32,9 +34,12 @@ create table if not exists public.properties (
   featured boolean not null default false,
   description text not null default '',
   images text[] not null default '{}',
+  sort_order integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.properties add column if not exists sort_order integer not null default 0;
 
 create table if not exists public.services (
   id uuid primary key default gen_random_uuid(),

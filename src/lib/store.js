@@ -38,7 +38,7 @@ export async function loadCmsData() {
 
   const [settingsResult, propertiesResult, servicesResult, testimonialsResult] = await Promise.all([
     supabase.from(tables.settings).select('*').eq('singleton_key', 'main').maybeSingle(),
-    supabase.from(tables.properties).select('*').order('created_at', { ascending: false }),
+    supabase.from(tables.properties).select('*').order('sort_order').order('created_at', { ascending: false }),
     supabase.from(tables.services).select('*').order('sort_order'),
     supabase.from(tables.testimonials).select('*').order('sort_order'),
   ]);
@@ -69,8 +69,9 @@ export async function saveCmsData(data) {
   if (settingsResult.error) throw settingsResult.error;
 
   const upsertCollection = async (table, collection) => {
-    const payload = collection.map((item) => ({
+    const payload = collection.map((item, index) => ({
       ...item,
+      ...(table === tables.properties ? { sort_order: index } : {}),
       updated_at: new Date().toISOString(),
     }));
     const existing = await supabase.from(table).select('id');

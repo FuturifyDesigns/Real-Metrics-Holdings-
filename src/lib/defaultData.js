@@ -9,6 +9,7 @@ export const defaultSettings = {
   about_title: 'Property presentation with a local point of view.',
   about_body: 'We started Real Metrics Holdings to give Botswana property a more considered place in the market. Each listing is shaped to feel clear, credible, and worth someone’s time.',
   contact_intro: 'Whether you are selling, letting, or launching a development, tell us what you need to bring to market.',
+  custom_sections: [],
 };
 
 export const defaultProperties = [

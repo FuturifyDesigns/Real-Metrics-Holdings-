@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   ArrowRight, Bath, BedDouble, Building2, ChartNoAxesCombined, Check, ChevronLeft, ChevronRight,
-  ImagePlus, Mail, MapPin, Megaphone, Phone, Ruler, Send, ShieldCheck,
+  ImagePlus, Mail, MapPin, Megaphone, Pencil, Phone, Plus, Ruler, Save, Send, ShieldCheck, X,
 } from 'lucide-react';
 import { Admin } from './components/Admin';
 import { PropertyCard } from './components/PropertyCard';
@@ -86,7 +86,7 @@ function EditorialSlider() {
   return <div className="editorial-image editorial-slider reveal">{editorialSlides.map((slide, index) => <figure className={index === active ? 'active' : ''} key={slide.image}><img src={slide.image} alt={slide.label} loading="lazy" decoding="async" /><figcaption>{slide.label}</figcaption></figure>)}<div className="editorial-slide-markers" aria-label="Editorial slideshow">{editorialSlides.map((slide, index) => <button type="button" className={index === active ? 'active' : ''} onClick={() => setActive(index)} aria-label={`Show ${slide.label}`} key={slide.image} />)}</div></div>;
 }
 
-function HeroSlider({ navigate, settings }) {
+function HeroSlider({ navigate, settings, editMode = false, onEdit }) {
   const [active, setActive] = useState(0);
   useEffect(() => {
     const timer = window.setInterval(() => setActive((value) => (value + 1) % heroSlides.length), 6500);
@@ -98,6 +98,7 @@ function HeroSlider({ navigate, settings }) {
       {slides.map((slide, index) => <div className={`hero-slide ${index === active ? 'active' : ''}`} key={slide.image} aria-hidden={index !== active}><img src={slide.image} alt="" loading={index === 0 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'low'} decoding="async" /></div>)}
       <div className="hero-shade" />
       <div className="hero-copy" key={active}>
+        {editMode && active === 0 && <EditTrigger label="Edit homepage headline" className="hero-live-edit" onClick={() => onEdit({ type: 'settings', title: 'Homepage hero', fields: [{ key: 'hero_title', label: 'Headline' }, { key: 'hero_subtitle', label: 'Introduction', multiline: true }] })} />}
         <h1>{slides[active].title}</h1>
         <p>{slides[active].copy}</p>
         <div className="hero-actions">
@@ -113,37 +114,39 @@ function PageIntro({ eyebrow, title, copy, image }) {
   return <section className="page-intro"><img src={image} alt="" loading="eager" fetchPriority="high" decoding="async" /><div className="page-intro-shade" /><div className="page-intro-copy"><p className="eyebrow light">{eyebrow}</p><h1>{title}</h1><p>{copy}</p></div></section>;
 }
 
-function HomePage({ data, navigate }) {
+function HomePage({ data, navigate, editMode = false, onEdit }) {
   const featured = data.properties.filter((property) => property.featured).slice(0, 3);
   const properties = featured.length ? featured : data.properties.slice(0, 3);
   return <main>
-    <HeroSlider navigate={navigate} settings={data.settings} />
+    <HeroSlider navigate={navigate} settings={data.settings} editMode={editMode} onEdit={onEdit} />
     <section className="section home-listings">
       <div className="section-heading reveal"><p className="eyebrow">Selected properties</p><h2>Worth a closer look.</h2><p>Browse current homes, rentals, and commercial opportunities presented by Real Metrics Holdings.</p></div>
-      <div className="property-grid home-grid">{properties.map((property) => <PropertyCard key={property.id} property={property} detailHref={`${basePath}/properties/${property.id}`} contactHref={`${basePath}/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate} />)}</div>
+      <div className="property-grid home-grid">{properties.map((property) => <PropertyCard key={property.id} property={property} detailHref={`${basePath}/properties/${property.id}`} contactHref={`${basePath}/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate} editMode={editMode} onEdit={onEdit} />)}</div>
       <div className="section-action reveal"><Link className="text-link" to="/properties" onNavigate={navigate}>See all properties <ArrowRight size={17} /></Link></div>
     </section>
     <section className="editorial-split">
       <EditorialSlider />
       <div className="editorial-copy reveal"><p className="eyebrow">A better first impression</p><h2>Good property deserves good presentation.</h2><p>We bring together considered copy, carefully selected images, and clear listing information so buyers and tenants can understand the opportunity quickly.</p><Link className="text-link" to="/services" onNavigate={navigate}>How we help <ArrowRight size={17} /></Link></div>
     </section>
+    {(data.settings.custom_sections || []).map((section) => <section className="custom-content-section section" key={section.id}>{editMode && <EditTrigger label={`Edit ${section.title}`} onClick={() => onEdit({ type: 'section', id: section.id, title: 'Custom section' })} />}<p className="eyebrow">Real Metrics Holdings</p><h2>{section.title}</h2><p>{section.body}</p></section>)}
     <section className="cta-band reveal"><div><p className="eyebrow light">Have a property to market?</p><h2>Let us present it properly.</h2></div><Link className="light-button" to="/list-property" onNavigate={navigate}>Submit your property <ArrowRight size={18} /></Link></section>
   </main>;
 }
 
-function PropertiesPage({ properties, navigate }) {
+function PropertiesPage({ properties, navigate, editMode = false, onEdit }) {
   const [filter, setFilter] = useState('All');
   const filters = ['All', 'For Sale', 'For Rent', 'Available', 'Sold', 'Rented', 'Tenanted'];
   const visible = filter === 'All' ? properties : properties.filter((property) => property.status === filter);
   return <main>
     <PageIntro eyebrow="Properties" title="Find the right place." copy="Explore properties for sale and rent, along with recently completed campaigns." image={pageImages.properties} />
-    <section className="section"><div className="filter-bar" aria-label="Filter properties by status">{filters.map((item) => <button className={filter === item ? 'active' : ''} type="button" key={item} onClick={() => setFilter(item)}>{item}</button>)}</div>{visible.length ? <div className="property-grid">{visible.map((property) => <PropertyCard key={property.id} property={property} detailHref={`${basePath}/properties/${property.id}`} contactHref={`${basePath}/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate} />)}</div> : <p className="empty-state">No properties match this status yet.</p>}</section>
+    <section className="section"><div className="filter-bar" aria-label="Filter properties by status">{filters.map((item) => <button className={filter === item ? 'active' : ''} type="button" key={item} onClick={() => setFilter(item)}>{item}</button>)}</div>{visible.length ? <div className="property-grid">{visible.map((property) => <PropertyCard key={property.id} property={property} detailHref={`${basePath}/properties/${property.id}`} contactHref={`${basePath}/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate} editMode={editMode} onEdit={onEdit} />)}</div> : <p className="empty-state">No properties match this status yet.</p>}</section>
   </main>;
 }
 
-function PropertyDetailsPage({ property, navigate }) {
+function PropertyDetailsPage({ property, navigate, editMode = false, onEdit }) {
   const [activeImage, setActiveImage] = useState(0);
-  const images = property.images?.length ? property.images : ['https://images.unsplash.com/photo-1691425700585-c108acad6467?auto=format&fit=crop&w=1600&q=78'];
+  const hasImages = Boolean(property.images?.length);
+  const images = hasImages ? property.images : [publicAsset('real-metrics-logo-transparent.png')];
   const showPrevious = () => setActiveImage((current) => (current - 1 + images.length) % images.length);
   const showNext = () => setActiveImage((current) => (current + 1) % images.length);
   useEffect(() => { setActiveImage(0); }, [property.id]);
@@ -154,29 +157,29 @@ function PropertyDetailsPage({ property, navigate }) {
   }, [images.length]);
   return <main className="property-details-page">
     <section className="property-gallery">
-      <div className="property-gallery-main">{images.map((image, index) => <img className={index === activeImage ? 'active' : ''} src={image} alt={index === activeImage ? `${property.title} view ${activeImage + 1}` : ''} aria-hidden={index !== activeImage} loading={index === 0 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'low'} decoding="async" key={image} />)}<div className="gallery-caption"><span>{property.category}</span><strong>{property.title}</strong></div>{images.length > 1 && <div className="property-gallery-controls"><button type="button" onClick={showPrevious} aria-label="Previous property image"><ChevronLeft /></button><span>{activeImage + 1} / {images.length}</span><button type="button" onClick={showNext} aria-label="Next property image"><ChevronRight /></button></div>}</div>
+      <div className={`property-gallery-main${hasImages ? '' : ' no-images'}`}>{images.map((image, index) => <img className={index === activeImage ? 'active' : ''} src={image} alt={index === activeImage ? `${property.title} view ${activeImage + 1}` : ''} aria-hidden={index !== activeImage} loading={index === 0 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'low'} decoding="async" key={image} />)}<div className="gallery-caption"><span>{property.category}</span><strong>{property.title}</strong></div>{images.length > 1 && <div className="property-gallery-controls"><button type="button" onClick={showPrevious} aria-label="Previous property image"><ChevronLeft /></button><span>{activeImage + 1} / {images.length}</span><button type="button" onClick={showNext} aria-label="Next property image"><ChevronRight /></button></div>}</div>
       {images.length > 1 && <div className="property-thumbnails" aria-label="Property image gallery">{images.map((image, index) => <button type="button" className={index === activeImage ? 'active' : ''} onClick={() => setActiveImage(index)} key={image}><img src={image} alt={`Show ${property.title} image ${index + 1}`} loading="lazy" decoding="async" /></button>)}</div>}
     </section>
-    <section className="property-details section"><div className="property-details-copy"><Link className="back-link" to="/properties" onNavigate={navigate}>← Back to properties</Link><p className="eyebrow">{property.category}</p><h1>{property.title}</h1><p className="property-detail-location"><MapPin />{property.location}</p><p className="property-detail-description">{property.description}</p><div className="property-detail-meta"><span><BedDouble /> <strong>{property.beds || 'Studio'}</strong> Bedrooms</span><span><Bath /> <strong>{property.baths}</strong> Bathrooms</span><span><Ruler /> <strong>{property.size || 'Not specified'}</strong> Size</span></div><div className="property-detail-note"><h2>Property overview</h2><p>This listing is currently marked <strong>{property.status.toLowerCase()}</strong>. Review the complete gallery above, then enquire to confirm availability, arrange a viewing, or request any additional information from the Real Metrics team.</p></div></div><aside className="property-enquiry-card"><img src={images[0]} alt={`${property.title} enquiry preview`} loading="lazy" decoding="async" /><span className={`status status-${String(property.status).toLowerCase().replaceAll(' ', '-')}`}>{property.status}</span><p>Asking price</p><strong>{property.price}</strong><p>Interested in this property? Its image and full listing details will be attached to your enquiry.</p><Link className="primary-button" to={`/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate}>Enquire about this property <ArrowRight /></Link></aside></section>
+    <section className="property-details section"><div className="property-details-copy">{editMode && <EditTrigger label={`Edit ${property.title}`} onClick={() => onEdit({ type: 'property', id: property.id, title: 'Property details' })} />}<Link className="back-link" to="/properties" onNavigate={navigate}>← Back to properties</Link><p className="eyebrow">{property.category}</p><h1>{property.title}</h1><p className="property-detail-location"><MapPin />{property.location}</p><p className="property-detail-description">{property.description}</p><div className="property-detail-meta"><span><BedDouble /> <strong>{property.beds || 'Studio'}</strong> Bedrooms</span><span><Bath /> <strong>{property.baths}</strong> Bathrooms</span><span><Ruler /> <strong>{property.size || 'Not specified'}</strong> Size</span></div><div className="property-detail-note"><h2>Property overview</h2><p>This listing is currently marked <strong>{property.status.toLowerCase()}</strong>. Review the complete gallery above, then enquire to confirm availability, arrange a viewing, or request any additional information from the Real Metrics team.</p></div></div><aside className="property-enquiry-card"><img src={images[0]} alt={`${property.title} enquiry preview`} loading="lazy" decoding="async" /><span className={`status status-${String(property.status).toLowerCase().replaceAll(' ', '-')}`}>{property.status}</span><p>Asking price</p><strong>{property.price}</strong><p>Interested in this property? Its image and full listing details will be attached to your enquiry.</p><Link className="primary-button" to={`/contact?property=${encodeURIComponent(property.id)}`} onNavigate={navigate}>Enquire about this property <ArrowRight /></Link></aside></section>
   </main>;
 }
 
 const serviceIcon = (icon) => icon === 'layout' ? <Building2 /> : icon === 'chart' ? <ChartNoAxesCombined /> : <Megaphone />;
 
-function ServicesPage({ services, navigate }) {
+function ServicesPage({ services, navigate, editMode = false, onEdit }) {
   return <main>
     <PageIntro eyebrow="Our services" title="Property marketing, handled with care." copy="From first brief to published campaign, we make each listing clear, attractive, and easy to act on." image={pageImages.services} />
     <section className="services-intro section"><div><p className="eyebrow">Complete listing support</p><h2>Every stage of the property story, brought together.</h2></div><p>We combine practical property information, considered visual direction, and a clear route to enquiry. Owners, landlords, agents, and developers get one organised workflow from submission to publication.</p></section>
-    <section className="service-showcases">{services.map((service, index) => { const detail = serviceDetails[index % serviceDetails.length]; return <article className="service-showcase reveal" key={service.id}><div className="service-showcase-image"><img src={detail.image} alt={`${service.title} service`} loading="lazy" decoding="async" /><span>0{index + 1}</span></div><div className="service-showcase-copy"><div className="service-icon">{serviceIcon(service.icon)}</div><p className="eyebrow">{detail.kicker}</p><h2>{service.title}</h2><p>{service.description}</p><ul>{detail.features.map((feature) => <li key={feature}><Check size={17} />{feature}</li>)}</ul></div></article>; })}</section>
+    <section className="service-showcases">{services.map((service, index) => { const detail = serviceDetails[index % serviceDetails.length]; return <article className="service-showcase reveal" key={service.id}>{editMode && <EditTrigger label={`Edit ${service.title}`} className="service-live-edit" onClick={() => onEdit({ type: 'service', id: service.id, title: 'Service content' })} />}<div className="service-showcase-image"><img src={detail.image} alt={`${service.title} service`} loading="lazy" decoding="async" /><span>0{index + 1}</span></div><div className="service-showcase-copy"><div className="service-icon">{serviceIcon(service.icon)}</div><p className="eyebrow">{detail.kicker}</p><h2>{service.title}</h2><p>{service.description}</p><ul>{detail.features.map((feature) => <li key={feature}><Check size={17} />{feature}</li>)}</ul></div></article>; })}</section>
     <section className="process-band"><div className="section-heading reveal"><p className="eyebrow light">Our approach</p><h2>Simple from brief to enquiry.</h2></div><div className="process-grid"><div className="reveal"><strong>01</strong><h3>Share the property</h3><p>Send the details, images, location, price, and availability.</p></div><div className="reveal"><strong>02</strong><h3>We shape the advert</h3><p>We organise the story and present the property with clarity.</p></div><div className="reveal"><strong>03</strong><h3>Reach the market</h3><p>Your campaign goes live with direct paths for serious enquiries.</p></div></div></section>
     <section className="service-assurance section"><div className="section-heading reveal"><p className="eyebrow">Built for confidence</p><h2>Clear information. Human review. Better enquiries.</h2></div><div className="assurance-grid"><article><ShieldCheck /><h3>Reviewed before publishing</h3><p>Every owner-submitted listing enters a private approval queue before it can appear publicly.</p></article><article><ImagePlus /><h3>Gallery-first presentation</h3><p>Images are arranged into responsive slideshows so visitors can explore every property properly.</p></article><article><Mail /><h3>Enquiries stay connected</h3><p>Property context and visitor contact details reach the admin inbox together for useful follow-up.</p></article></div></section>
     <section className="cta-band reveal"><div><p className="eyebrow light">Ready to begin?</p><h2>Bring us your next listing.</h2></div><Link className="light-button" to="/list-property" onNavigate={navigate}>List your property <ArrowRight size={18} /></Link></section>
   </main>;
 }
 
-function AboutPage({ settings, navigate }) {
+function AboutPage({ settings, navigate, editMode = false, onEdit }) {
   return <main>
-    <PageIntro eyebrow="About us" title={settings.about_title} copy="Real Metrics Holdings helps property owners and professionals show the market what makes a place worth considering." image={pageImages.about} />
+    <div className="editable-page-intro">{editMode && <EditTrigger label="Edit about page introduction" onClick={() => onEdit({ type: 'settings', title: 'About page', fields: [{ key: 'about_title', label: 'Page title' }, { key: 'about_body', label: 'About text', multiline: true }] })} />}<PageIntro eyebrow="About us" title={settings.about_title} copy="Real Metrics Holdings helps property owners and professionals show the market what makes a place worth considering." image={pageImages.about} /></div>
     <section className="about-page section"><div className="about-statement reveal"><p className="eyebrow">Real Metrics Holdings</p><h2>Local understanding. A sharper standard.</h2></div><div className="about-body reveal"><p>{settings.about_body}</p><p>Our work is grounded in honest information, strong visual judgement, and a smooth experience for both advertisers and property seekers.</p><Link className="text-link" to="/services" onNavigate={navigate}>Explore our approach <ArrowRight size={17} /></Link></div></section>
     <section className="page-slider-section"><SilentImageSlider images={aboutSlides} label="Residential property slideshow" /></section>
     <section className="about-principles section"><div><span>Botswana focused</span><p>Built around the local property market, its owners, professionals, buyers, and tenants.</p></div><div><span>Human reviewed</span><p>Every submitted listing is checked before publication to protect quality and trust.</p></div><div><span>Detail led</span><p>Strong images and accurate information work together to help people decide with confidence.</p></div></section>
@@ -185,11 +188,11 @@ function AboutPage({ settings, navigate }) {
   </main>;
 }
 
-function ContactPage({ settings, property }) {
+function ContactPage({ settings, property, editMode = false, onEdit }) {
   const [submitting, setSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState('');
   const propertySummary = property ? `${property.title} — ${property.location} — ${property.price}\nStatus: ${property.status}\nCategory: ${property.category}\nBedrooms: ${property.beds || 'Studio'}\nBathrooms: ${property.baths}\nSize: ${property.size || 'Not specified'}\n\n${property.description}` : '';
-  const propertyImage = property?.images?.[0];
+  const propertyImage = property ? (property.images?.[0] || publicAsset('real-metrics-logo-transparent.png')) : '';
   const submit = async (event) => {
     event.preventDefault();
     setSubmitting(true); setFormMessage('');
@@ -230,7 +233,7 @@ function ContactPage({ settings, property }) {
     } finally { setSubmitting(false); }
   };
   return <main>
-    <PageIntro eyebrow="Contact" title="Let's talk property." copy={settings.contact_intro} image={pageImages.contact} />
+    <div className="editable-page-intro">{editMode && <EditTrigger label="Edit contact page" onClick={() => onEdit({ type: 'settings', title: 'Contact page', fields: [{ key: 'contact_intro', label: 'Page introduction', multiline: true }, { key: 'email', label: 'Email' }, { key: 'phone', label: 'Phone' }, { key: 'address', label: 'Address' }] })} />}<PageIntro eyebrow="Contact" title="Let's talk property." copy={settings.contact_intro} image={pageImages.contact} /></div>
     <section className="contact-page section"><div className="contact-details reveal"><p className="eyebrow">Get in touch</p><h2>{property ? `Enquire about ${property.title}` : 'How can we help?'}</h2>{property && <div className="enquiry-property-preview">{propertyImage && <img src={propertyImage} alt={property.title} loading="lazy" decoding="async" />}<div><span>{property.status}</span><strong>{property.title}</strong><small><MapPin size={14} />{property.location}</small><b>{property.price}</b></div></div>}<p>{property ? 'The property image and details have been added to your enquiry. Enter your contact information and a personal message so our team can respond.' : 'For property submissions, use our dedicated listing form. For general enquiries, partnerships, or support, send us a message here.'}</p><a href={`mailto:${settings.email}`}><Mail /><span><small>Email</small>{settings.email}</span></a><a href={`tel:${settings.phone.replaceAll(' ', '')}`}><Phone /><span><small>Phone</small>{settings.phone}</span></a><div className="contact-location"><MapPin /><span><small>Location</small>{settings.address}</span></div></div><form className="contact-form reveal" onSubmit={submit}><label className="honeypot" aria-hidden="true">Company website<input name="company_website" tabIndex="-1" autoComplete="off" /></label>{property && <label className="wide">Selected property details<textarea className="readonly-details" value={propertySummary} rows="7" readOnly /></label>}<label>Your name *<input name="name" autoComplete="name" minLength="2" maxLength="80" required /></label><label>Email address *<input name="email" type="email" autoComplete="email" maxLength="120" required /></label><label>Phone number *<input name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[+0-9][0-9 ()-]{6,19}" title="Enter a valid phone number using digits, spaces, brackets, + or -." required /></label><label>Inquiry type *<select name="inquiry_type" defaultValue={property ? 'Property enquiry' : ''} required><option value="" disabled>Select one</option><option>Property enquiry</option><option>General enquiry</option><option>Property search</option><option>Partnership</option><option>Website support</option></select></label><label className="wide">How can we help? *<textarea name="message" rows="7" minLength="20" maxLength="1500" defaultValue={property ? `I am interested in ${property.title} in ${property.location}. Please contact me with more information and the next steps.` : ''} required /></label><label className="consent-row wide"><input name="privacy_consent" type="checkbox" required /><span>I agree to the processing of my information as explained in the <a href={`${basePath}/privacy`} target="_blank" rel="noopener noreferrer">Privacy Notice</a> and accept the <a href={`${basePath}/terms`} target="_blank" rel="noopener noreferrer">Terms of Service</a>. *</span></label><button className="primary-button" type="submit" disabled={submitting}>{submitting ? 'Saving enquiry…' : 'Send enquiry'} <Send size={17} /></button>{formMessage && <p className="contact-form-message wide" role="status">{formMessage}</p>}</form></section>
   </main>;
 }
@@ -264,6 +267,49 @@ function TermsPage({ settings }) {
   </div></article></main>;
 }
 
+function EditTrigger({ label, onClick, className = '' }) {
+  return <button className={`live-edit-button ${className}`} type="button" onClick={onClick} aria-label={label}><Pencil size={14} />Edit</button>;
+}
+
+function LiveEditPanel({ editor, data, onClose, onCommit }) {
+  const property = editor.type === 'property' ? data.properties.find((item) => item.id === editor.id) : null;
+  const service = editor.type === 'service' ? data.services.find((item) => item.id === editor.id) : null;
+  const section = editor.type === 'section' && editor.id ? (data.settings.custom_sections || []).find((item) => item.id === editor.id) : null;
+  const source = editor.type === 'settings' ? Object.fromEntries(editor.fields.map((field) => [field.key, data.settings[field.key] || ''])) : property || service || section || { id: crypto.randomUUID(), title: '', body: '' };
+  const [draft, setDraft] = useState(source);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const definitions = editor.type === 'settings' ? editor.fields : editor.type === 'property' ? [
+    { key: 'title', label: 'Property title' }, { key: 'location', label: 'Location' }, { key: 'price', label: 'Price' },
+    { key: 'status', label: 'Status', options: ['Available', 'For Sale', 'For Rent', 'Sold', 'Rented', 'Tenanted'] },
+    { key: 'category', label: 'Category' }, { key: 'beds', label: 'Bedrooms', type: 'number' }, { key: 'baths', label: 'Bathrooms', type: 'number' },
+    { key: 'size', label: 'Size' }, { key: 'featured', label: 'Featured on homepage', type: 'checkbox' }, { key: 'description', label: 'Description', multiline: true },
+  ] : editor.type === 'service' ? [{ key: 'title', label: 'Service title' }, { key: 'description', label: 'Description', multiline: true }] : [{ key: 'title', label: 'Section title' }, { key: 'body', label: 'Section text', multiline: true }];
+  const submit = async (event) => {
+    event.preventDefault(); setSaving(true); setError('');
+    let next = data;
+    if (editor.type === 'settings') next = { ...data, settings: { ...data.settings, ...draft } };
+    if (editor.type === 'property') next = { ...data, properties: data.properties.map((item) => item.id === editor.id ? { ...item, ...draft } : item) };
+    if (editor.type === 'service') next = { ...data, services: data.services.map((item) => item.id === editor.id ? { ...item, ...draft } : item) };
+    if (editor.type === 'section') {
+      const sections = data.settings.custom_sections || [];
+      next = { ...data, settings: { ...data.settings, custom_sections: editor.id ? sections.map((item) => item.id === editor.id ? { ...item, ...draft } : item) : [...sections, draft] } };
+    }
+    try { await onCommit(next); }
+    catch (saveError) { setError(saveError.message || 'The change could not be saved.'); setSaving(false); }
+  };
+  const removeSection = async () => {
+    const next = { ...data, settings: { ...data.settings, custom_sections: (data.settings.custom_sections || []).filter((item) => item.id !== editor.id) } };
+    setSaving(true);
+    try { await onCommit(next); } catch (saveError) { setError(saveError.message || 'The section could not be deleted.'); setSaving(false); }
+  };
+  return <div className="live-editor-overlay" role="dialog" aria-modal="true" aria-label="Edit live website content"><form className="live-editor-panel" onSubmit={submit}><header><div><span>Live editor</span><h2>{editor.title || (editor.id ? 'Edit content' : 'Add section')}</h2></div><button type="button" onClick={onClose} aria-label="Close editor"><X /></button></header><div className="live-editor-fields">{definitions.map((field) => field.type === 'checkbox' ? <label className="live-editor-check" key={field.key}><input type="checkbox" checked={Boolean(draft[field.key])} onChange={(event) => setDraft((current) => ({ ...current, [field.key]: event.target.checked }))} />{field.label}</label> : <label key={field.key}>{field.label}{field.options ? <select value={draft[field.key] || ''} onChange={(event) => setDraft((current) => ({ ...current, [field.key]: event.target.value }))}>{field.options.map((option) => <option key={option}>{option}</option>)}</select> : field.multiline ? <textarea rows="6" value={draft[field.key] || ''} onChange={(event) => setDraft((current) => ({ ...current, [field.key]: event.target.value }))} /> : <input type={field.type || 'text'} value={draft[field.key] ?? ''} onChange={(event) => setDraft((current) => ({ ...current, [field.key]: field.type === 'number' ? Number(event.target.value) : event.target.value }))} />}</label>)}</div>{error && <p className="live-editor-error">{error}</p>}<footer>{editor.type === 'section' && editor.id && <button className="live-editor-delete" type="button" onClick={removeSection}>Delete section</button>}<button className="primary-button" type="submit" disabled={saving}><Save size={16} />{saving ? 'Publishing…' : 'Publish change'}</button></footer></form></div>;
+}
+
+function LiveEditorBar({ path, onAddSection }) {
+  return <aside className="live-editor-bar"><span><Pencil size={15} />Live editing</span>{path === '/' && <button type="button" onClick={onAddSection}><Plus size={15} />Add section</button>}<a href={`${basePath}/admin`}>Back to dashboard</a></aside>;
+}
+
 function Header({ path, navigate }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const links = [['/', 'Home'], ['/properties', 'Properties'], ['/services', 'Services'], ['/about', 'About'], ['/contact', 'Contact']];
@@ -277,14 +323,21 @@ function Header({ path, navigate }) {
   return <header className="site-header"><Link className="brand" to="/" onNavigate={navigate} aria-label="Real Metrics Holdings home"><img src={publicAsset('real-metrics-logo-transparent.png')} alt="Real Metrics Holdings" decoding="async" /></Link><nav id="primary-navigation" className={`nav ${menuOpen ? 'open' : ''}`} aria-label="Primary navigation">{links.map(([to, label]) => <Link key={to} className={path === to ? 'active' : ''} to={to} onNavigate={closeAndNavigate}>{label}</Link>)}<Link className="mobile-nav-cta" to="/list-property" onNavigate={closeAndNavigate}>List your property <ArrowRight size={17} /></Link></nav><Link className="header-cta" to="/list-property" onNavigate={navigate}>List your property <ArrowRight size={16} /></Link><button className={`menu-button ${menuOpen ? 'open' : ''}`} type="button" onClick={() => setMenuOpen((current) => !current)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} aria-controls="primary-navigation"><span className="menu-icon" aria-hidden="true"><i /><i /><i /></span></button></header>;
 }
 
-function Footer({ settings, navigate }) {
-  return <footer className="site-footer"><div className="footer-main"><div className="footer-brand"><img src={publicAsset('real-metrics-logo-transparent.png')} alt="Real Metrics Holdings" loading="lazy" decoding="async" /><p>Professional property advertising and listing presentation across Botswana.</p></div><div className="footer-links"><h3>Company</h3><Link to="/about" onNavigate={navigate}>About</Link><Link to="/services" onNavigate={navigate}>Services</Link><Link to="/properties" onNavigate={navigate}>Properties</Link><Link to="/list-property" onNavigate={navigate}>List a property</Link></div><div className="footer-links"><h3>Legal</h3><Link to="/privacy" onNavigate={navigate}>Privacy notice</Link><Link to="/terms" onNavigate={navigate}>Terms of service</Link></div><div className="footer-links"><h3>Contact</h3><a href={`mailto:${settings.email}`}>{settings.email}</a><a href={`tel:${settings.phone.replaceAll(' ', '')}`}>{settings.phone}</a><span>{settings.address}</span></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Real Metrics Holdings</span><a href="https://futurifydesigns.com" target="_blank" rel="noopener noreferrer">Built by Futurify Designs</a></div></footer>;
+function Footer({ settings, navigate, editMode = false, onEdit }) {
+  return <footer className="site-footer">{editMode && <EditTrigger label="Edit contact details" className="footer-live-edit" onClick={() => onEdit({ type: 'settings', title: 'Contact details', fields: [{ key: 'email', label: 'Email' }, { key: 'phone', label: 'Phone' }, { key: 'address', label: 'Address' }] })} />}<div className="footer-main"><div className="footer-brand"><img src={publicAsset('real-metrics-logo-transparent.png')} alt="Real Metrics Holdings" loading="lazy" decoding="async" /><p>Professional property advertising and listing presentation across Botswana.</p></div><div className="footer-links"><h3>Company</h3><Link to="/about" onNavigate={navigate}>About</Link><Link to="/services" onNavigate={navigate}>Services</Link><Link to="/properties" onNavigate={navigate}>Properties</Link><Link to="/list-property" onNavigate={navigate}>List a property</Link></div><div className="footer-links"><h3>Legal</h3><Link to="/privacy" onNavigate={navigate}>Privacy notice</Link><Link to="/terms" onNavigate={navigate}>Terms of service</Link></div><div className="footer-links"><h3>Contact</h3><a href={`mailto:${settings.email}`}>{settings.email}</a><a href={`tel:${settings.phone.replaceAll(' ', '')}`}>{settings.phone}</a><span>{settings.address}</span></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Real Metrics Holdings</span><a href="https://futurifydesigns.com" target="_blank" rel="noopener noreferrer">Built by Futurify Designs</a></div></footer>;
 }
 
 function App() {
   const [data, setData] = useState(initialCmsData);
   const [path, setPath] = useState(currentPath());
+  const [liveEditing] = useState(() => new URLSearchParams(window.location.search).get('edit') === '1');
+  const [liveAuthorized, setLiveAuthorized] = useState(false);
+  const [editor, setEditor] = useState(null);
   useEffect(() => { loadCmsData().then(setData); }, []);
+  useEffect(() => {
+    if (!liveEditing || !hasSupabase) return;
+    supabase.auth.getSession().then(({ data: authData }) => setLiveAuthorized(authData.session?.user?.email?.toLowerCase() === 'info@realmetricsholdings.com'));
+  }, [liveEditing]);
   useEffect(() => { const sync = () => setPath(currentPath()); window.addEventListener('popstate', sync); return () => window.removeEventListener('popstate', sync); }, []);
   useEffect(() => {
     if (path === '/admin') return undefined;
@@ -304,29 +357,31 @@ function App() {
     return () => observer.disconnect();
   }, [data, path]);
   const navigate = (next) => setPath(next);
+  const editMode = liveEditing && liveAuthorized;
+  const commitLiveChange = async (next) => { await saveCmsData(next); setData(next); setEditor(null); };
   const page = useMemo(() => {
     if (!data) return null;
     if (path === '/admin') return <Admin data={data} setData={setData} onSave={saveCmsData} />;
-    if (path === '/properties') return <PropertiesPage properties={data.properties} navigate={navigate} />;
+    if (path === '/properties') return <PropertiesPage properties={data.properties} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
     if (path.startsWith('/properties/')) {
       const propertyId = decodeURIComponent(path.slice('/properties/'.length));
       const property = data.properties.find((item) => String(item.id) === propertyId);
-      return property ? <PropertyDetailsPage property={property} navigate={navigate} /> : <PropertiesPage properties={data.properties} navigate={navigate} />;
+      return property ? <PropertyDetailsPage property={property} navigate={navigate} editMode={editMode} onEdit={setEditor} /> : <PropertiesPage properties={data.properties} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
     }
-    if (path === '/services') return <ServicesPage services={data.services} navigate={navigate} />;
-    if (path === '/about') return <AboutPage settings={data.settings} navigate={navigate} />;
+    if (path === '/services') return <ServicesPage services={data.services} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
+    if (path === '/about') return <AboutPage settings={data.settings} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
     if (path === '/contact') {
       const propertyId = new URLSearchParams(window.location.search).get('property');
-      return <ContactPage settings={data.settings} property={data.properties.find((item) => String(item.id) === propertyId)} />;
+      return <ContactPage settings={data.settings} property={data.properties.find((item) => String(item.id) === propertyId)} editMode={editMode} onEdit={setEditor} />;
     }
     if (path === '/list-property') return <PropertySubmissionPage pageImage={pageImages.submission} />;
     if (path === '/privacy') return <PrivacyPage settings={data.settings} />;
     if (path === '/terms') return <TermsPage settings={data.settings} />;
-    return <HomePage data={data} navigate={navigate} />;
-  }, [data, path]);
+    return <HomePage data={data} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
+  }, [data, path, editMode]);
   if (!data) return <><Header path={path} navigate={navigate} /><main className="page-pending" aria-busy="true" /></>;
   if (path === '/admin') return page;
-  return <><Header path={path} navigate={navigate} />{page}<Footer settings={data.settings} navigate={navigate} /></>;
+  return <><Header path={path} navigate={navigate} />{editMode && <LiveEditorBar path={path} onAddSection={() => setEditor({ type: 'section', title: 'Add homepage section' })} />}{page}<Footer settings={data.settings} navigate={navigate} editMode={editMode} onEdit={setEditor} />{editor && <LiveEditPanel key={`${editor.type}-${editor.id || 'new'}`} editor={editor} data={data} onClose={() => setEditor(null)} onCommit={commitLiveChange} />}</>;
 }
 
 createRoot(document.getElementById('root')).render(<App />);

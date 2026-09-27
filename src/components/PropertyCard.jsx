@@ -1,12 +1,13 @@
-import { ArrowRight, Bath, BedDouble, MapPin, MoveUpRight, Ruler } from 'lucide-react';
+import { ArrowRight, Bath, BedDouble, MapPin, MoveUpRight, Pencil, Ruler } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const statusClass = (status) => `status status-${String(status).toLowerCase().replaceAll(' ', '-')}`;
 
-export function PropertyCard({ property, contactHref = '/contact', detailHref, onNavigate }) {
+export function PropertyCard({ property, contactHref = '/contact', detailHref, onNavigate, editMode = false, onEdit }) {
   const [imageIndex, setImageIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const images = property.images?.length ? property.images : ['https://images.unsplash.com/photo-1691425700585-c108acad6467?auto=format&fit=crop&w=1200&q=76'];
+  const hasImages = Boolean(property.images?.length);
+  const images = hasImages ? property.images : [`${import.meta.env.BASE_URL}real-metrics-logo-transparent.png`];
 
   useEffect(() => {
     setImageIndex(0);
@@ -31,7 +32,8 @@ export function PropertyCard({ property, contactHref = '/contact', detailHref, o
 
   return (
     <article className={`property-card reveal${property.featured ? ' featured-card' : ''}`} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false); }}>
-      <div className="property-media">
+      {editMode && <button className="live-edit-button property-live-edit" type="button" onClick={() => onEdit?.({ type: 'property', id: property.id })} aria-label={`Edit ${property.title}`}><Pencil size={14} />Edit</button>}
+      <div className={`property-media${hasImages ? '' : ' no-images'}`}>
         {images.map((image, index) => <img className={index === imageIndex ? 'active' : ''} src={image} alt={index === imageIndex ? `${property.title}, gallery image ${index + 1}` : ''} aria-hidden={index !== imageIndex} loading="lazy" decoding="async" key={image} />)}
         <a className="property-media-link" href={detailHref} onClick={(event) => follow(event, detailHref)} aria-label={`View full details for ${property.title}`} />
         <span className={statusClass(property.status)}>{property.status}</span>
