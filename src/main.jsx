@@ -13,7 +13,6 @@ import './styles.css';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const publicAsset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
-const routes = ['/', '/properties', '/services', '/products', '/products/enquire', '/geohub', '/about', '/contact', '/list-property', '/privacy', '/terms', '/admin'];
 const siteUrl = 'https://realmetricsholdings.com';
 const seoPages = {
   '/': { title: 'Real Metrics Holdings | Property Advertising in Botswana', description: 'Real Metrics Holdings provides professional property advertising and listings in Botswana, alongside food products and GeoHub geoscience consulting services.' },
@@ -29,12 +28,13 @@ const seoPages = {
   '/terms': { title: 'Terms of Service | Real Metrics Holdings', description: 'Read the terms that apply when using the Real Metrics Holdings website and services.' },
   '/admin': { title: 'Admin | Real Metrics Holdings', description: 'Private website administration.', noindex: true },
 };
+const notFoundSeo = { title: 'Page Not Found | Real Metrics Holdings', description: 'The requested page could not be found.', noindex: true };
 
 function currentPath() {
   const pathname = window.location.pathname;
   const stripped = basePath && pathname.startsWith(basePath) ? pathname.slice(basePath.length) : pathname;
   const normalized = `/${stripped.replace(/^\/+|\/+$/g, '')}`;
-  return normalized === '/' || routes.includes(normalized) || normalized.startsWith('/properties/') ? normalized : '/';
+  return normalized;
 }
 
 function Link({ to, onNavigate, children, className = '', ...props }) {
@@ -439,6 +439,10 @@ function Footer({ settings, navigate, editMode = false, onEdit }) {
   return <footer className="site-footer">{editMode && <EditTrigger label="Edit contact details" className="footer-live-edit" onClick={() => onEdit({ type: 'settings', title: 'Contact details', fields: [{ key: 'email', label: 'Email' }, { key: 'phone', label: 'Phone' }, { key: 'address', label: 'Address' }] })} />}<div className="footer-main"><div className="footer-brand"><img src={publicAsset('real-metrics-logo-transparent.png')} alt="Real Metrics Holdings" loading="lazy" decoding="async" /><p>Professional property advertising and listing presentation across Botswana.</p></div><div className="footer-links"><h3>Company</h3><Link to="/about" onNavigate={navigate}>About</Link><Link to="/services" onNavigate={navigate}>Services</Link><Link to="/products" onNavigate={navigate}>Food products</Link><Link to="/geohub" onNavigate={navigate}>GeoHub</Link><Link to="/properties" onNavigate={navigate}>Properties</Link><Link to="/list-property" onNavigate={navigate}>List a property</Link></div><div className="footer-links"><h3>Legal</h3><Link to="/privacy" onNavigate={navigate}>Privacy notice</Link><Link to="/terms" onNavigate={navigate}>Terms of service</Link></div><div className="footer-links"><h3>Contact</h3><a href={`mailto:${settings.email}`}>{settings.email}</a><a href={`tel:${settings.phone.replaceAll(' ', '')}`}>{settings.phone}</a><span>{settings.address}</span></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Real Metrics Holdings</span><a href="https://futurifydesigns.com" target="_blank" rel="noopener noreferrer">Built by Futurify Designs</a></div></footer>;
 }
 
+function NotFoundPage({ navigate }) {
+  return <main className="not-found-page section"><p className="eyebrow">404</p><h1>That page is not here.</h1><p>The address may have changed, or the page may no longer be available.</p><Link className="primary-button" to="/" onNavigate={navigate}>Return home <ArrowRight size={16} /></Link></main>;
+}
+
 function App() {
   const [data, setData] = useState(initialCmsData);
   const [path, setPath] = useState(currentPath());
@@ -447,7 +451,7 @@ function App() {
   const [editor, setEditor] = useState(null);
   useEffect(() => { loadCmsData().then(setData); }, []);
   useEffect(() => {
-    const page = seoPages[path] || seoPages['/'];
+    const page = seoPages[path] || notFoundSeo;
     const canonicalPath = page.noindex ? '/' : path;
     const canonical = `${siteUrl}${canonicalPath === '/' ? '/' : canonicalPath}`;
     document.title = page.title;
@@ -488,9 +492,10 @@ function App() {
     if (path === '/admin') return <Admin data={data} setData={setData} onSave={saveCmsData} />;
     if (path === '/properties') return <PropertiesPage properties={data.properties} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
     if (path.startsWith('/properties/')) {
-      const propertyId = decodeURIComponent(path.slice('/properties/'.length));
+      let propertyId = '';
+      try { propertyId = decodeURIComponent(path.slice('/properties/'.length)); } catch { return <NotFoundPage navigate={navigate} />; }
       const property = data.properties.find((item) => String(item.id) === propertyId);
-      return property ? <PropertyDetailsPage property={property} navigate={navigate} editMode={editMode} onEdit={setEditor} /> : <PropertiesPage properties={data.properties} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
+      return property ? <PropertyDetailsPage property={property} navigate={navigate} editMode={editMode} onEdit={setEditor} /> : <NotFoundPage navigate={navigate} />;
     }
     if (path === '/services') return <ServicesPage services={data.services} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
     if (path === '/products') return <FoodProductsPage navigate={navigate} />;
@@ -504,7 +509,8 @@ function App() {
     if (path === '/list-property') return <PropertySubmissionPage pageImage={pageImages.submission} />;
     if (path === '/privacy') return <PrivacyPage settings={data.settings} />;
     if (path === '/terms') return <TermsPage settings={data.settings} />;
-    return <HomePage data={data} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
+    if (path === '/') return <HomePage data={data} navigate={navigate} editMode={editMode} onEdit={setEditor} />;
+    return <NotFoundPage navigate={navigate} />;
   }, [data, path, editMode]);
   if (!data) return <><Header path={path} navigate={navigate} /><main className="page-pending" aria-busy="true" /></>;
   if (path === '/admin') return page;

@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const siteUrl = 'https://realmetricsholdings.com';
 const pages = [
@@ -12,6 +12,8 @@ const pages = [
   { path: 'list-property', title: 'List Your Property | Real Metrics Holdings', description: 'Submit a Botswana property for review and professional presentation by Real Metrics Holdings.' },
   { path: 'privacy', title: 'Privacy Notice | Real Metrics Holdings', description: 'Read how Real Metrics Holdings collects, uses, protects, and retains personal information.' },
   { path: 'terms', title: 'Terms of Service | Real Metrics Holdings', description: 'Read the terms that apply when using the Real Metrics Holdings website and services.' },
+  { path: 'products/enquire', title: 'Food Product Enquiry | Real Metrics Holdings', description: 'Send a private food and agricultural product sourcing enquiry to Real Metrics Holdings.', noindex: true },
+  { path: 'admin', title: 'Admin | Real Metrics Holdings', description: 'Private website administration.', noindex: true },
 ];
 
 const template = await readFile('dist/index.html', 'utf8');
@@ -25,9 +27,16 @@ for (const page of pages) {
     .replace(/<meta property="og:title" content="[^"]*"\s*\/>/, `<meta property="og:title" content="${page.title}" />`)
     .replace(/<meta property="og:description" content="[^"]*"\s*\/>/, `<meta property="og:description" content="${page.description}" />`)
     .replace(/<meta property="og:url" content="[^"]*"\s*\/>/, `<meta property="og:url" content="${canonical}" />`)
-    .replace(/<link rel="canonical" href="[^"]*"\s*\/>/, `<link rel="canonical" href="${canonical}" />`);
+    .replace(/<link rel="canonical" href="[^"]*"\s*\/>/, `<link rel="canonical" href="${canonical}" />`)
+    .replace(/<meta name="robots" content="[^"]*"\s*\/>/, `<meta name="robots" content="${page.noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large'}" />`)
+    .replace(/<meta name="googlebot" content="[^"]*"\s*\/>/, `<meta name="googlebot" content="${page.noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large'}" />`);
   await mkdir(`dist/${page.path}`, { recursive: true });
   await writeFile(`dist/${page.path}/index.html`, html);
 }
 
-await copyFile('dist/index.html', 'dist/404.html');
+const notFound = template
+  .replace(/<title>[^<]*<\/title>/, '<title>Page Not Found | Real Metrics Holdings</title>')
+  .replace(/<meta name="description" content="[^"]*"\s*\/>/, '<meta name="description" content="The requested page could not be found." />')
+  .replace(/<meta name="robots" content="[^"]*"\s*\/>/, '<meta name="robots" content="noindex, nofollow" />')
+  .replace(/<meta name="googlebot" content="[^"]*"\s*\/>/, '<meta name="googlebot" content="noindex, nofollow" />');
+await writeFile('dist/404.html', notFound);

@@ -4,7 +4,6 @@ import { hasSupabase, supabase } from '../lib/supabase';
 
 const statuses = ['Available', 'For Sale', 'For Rent', 'Sold', 'Rented', 'Tenanted'];
 const adminEmail = 'info@realmetricsholdings.com';
-const adminAuthStyle = { '--admin-background': `url(${import.meta.env.BASE_URL}images/hero-residence.png)` };
 
 const blankProperty = () => ({
   id: crypto.randomUUID(), title: 'New Property', location: 'Gaborone', price: 'Price on request', status: 'Available', category: 'Residential', beds: 0, baths: 0, size: '', featured: false, description: '', images: [], sort_order: 0,
@@ -176,8 +175,8 @@ export function Admin({ data, setData, onSave }) {
     finally { setSaving(false); }
   };
 
-  if (checking) return <main className="admin-shell admin-auth-shell" style={adminAuthStyle}><div className="admin-session-check">Checking session…</div></main>;
-  if (!session || session.user.email?.toLowerCase() !== adminEmail) return <main className="admin-shell admin-auth-shell" style={adminAuthStyle}><form className="admin-login" onSubmit={login}><img src={`${import.meta.env.BASE_URL}real-metrics-logo-transparent.png`} alt="Real Metrics Holdings" /><p className="eyebrow">Private access</p><h1>Admin CMS</h1><p>Sign in to manage website content and property advertisements.</p><label>Email<input value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="username" required /></label><label>Password<div className="password-field"><input value={password} onChange={(event) => setPassword(event.target.value)} type={showPassword ? 'text' : 'password'} autoComplete="current-password" required /><button className="password-toggle" type="button" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}>{showPassword ? 'Hide' : 'Show'}</button></div></label><button className="primary-button" type="submit">Sign in</button>{message && <span className="form-message">{message}</span>}</form></main>;
+  if (checking) return <main className="admin-shell admin-auth-shell"><div className="admin-session-check">Checking session…</div></main>;
+  if (!session || session.user.email?.toLowerCase() !== adminEmail) return <main className="admin-shell admin-auth-shell"><form className="admin-login" onSubmit={login}><img src={`${import.meta.env.BASE_URL}real-metrics-logo-transparent.png`} alt="Real Metrics Holdings" /><p className="eyebrow">Private access</p><h1>Admin CMS</h1><p>Sign in to manage website content and property advertisements.</p><label>Email<input value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="username" required /></label><label>Password<div className="password-field"><input value={password} onChange={(event) => setPassword(event.target.value)} type={showPassword ? 'text' : 'password'} autoComplete="current-password" required /><button className="password-toggle" type="button" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}>{showPassword ? 'Hide' : 'Show'}</button></div></label><button className="primary-button" type="submit">Sign in</button>{message && <span className="form-message">{message}</span>}</form></main>;
 
   const tabs = [
     ['overview', 'Overview'], ['properties', 'Properties'], ['submissions', `Submissions (${pendingSubmissions.length})`],

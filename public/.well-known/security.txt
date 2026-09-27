@@ -1,0 +1,5 @@
+Contact: mailto:info@realmetricsholdings.com
+Expires: 2027-09-27T00:00:00Z
+Canonical: https://realmetricsholdings.com/.well-known/security.txt
+Preferred-Languages: en
+Policy: https://realmetricsholdings.com/privacy
