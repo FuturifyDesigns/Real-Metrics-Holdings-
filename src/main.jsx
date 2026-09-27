@@ -46,9 +46,9 @@ const heroSlides = [
 
 const pageImages = {
   properties: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=2000&q=88',
-  services: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1920&q=78',
-  about: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1920&q=78',
-  contact: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=2000&q=88',
+  services: 'https://images.unsplash.com/photo-1719887805632-de5be825f72b?auto=format&fit=crop&w=1920&q=78',
+  about: 'https://images.unsplash.com/photo-1660361339436-ddd4b85372da?auto=format&fit=crop&w=1920&q=78',
+  contact: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=1920&q=78',
   submission: 'https://images.unsplash.com/photo-1600585152915-d208bec867a1?auto=format&fit=crop&w=2000&q=88',
 };
 
@@ -60,10 +60,32 @@ const editorialSlides = [
 ];
 
 const serviceDetails = [
-  { image: 'https://images.unsplash.com/photo-1568992687947-868a62a9f521?auto=format&fit=crop&w=1600&q=78', kicker: 'Campaign strategy', features: ['Listing brief and audience positioning', 'Clear property copy and key selling points', 'Sale, rental, tenancy, and development campaigns'] },
-  { image: 'https://images.unsplash.com/photo-1551135049-8a33b5883817?auto=format&fit=crop&w=1600&q=78', kicker: 'Visual presentation', features: ['Image selection and gallery sequencing', 'Mobile-ready property showcase pages', 'Consistent status, pricing, and feature information'] },
-  { image: 'https://images.unsplash.com/photo-1603201667141-5a2d4c673378?auto=format&fit=crop&w=1600&q=78', kicker: 'Market readiness', features: ['Human review before publication', 'Qualified enquiry capture and follow-up', 'Content updates as property status changes'] },
+  { image: 'https://images.unsplash.com/photo-1691425700585-c108acad6467?auto=format&fit=crop&w=1600&q=78', kicker: 'Campaign strategy', features: ['Listing brief and audience positioning', 'Clear property copy and key selling points', 'Sale, rental, tenancy, and development campaigns'] },
+  { image: 'https://images.unsplash.com/photo-1627141234469-24711efb373c?auto=format&fit=crop&w=1600&q=78', kicker: 'Visual presentation', features: ['Image selection and gallery sequencing', 'Mobile-ready property showcase pages', 'Consistent status, pricing, and feature information'] },
+  { image: 'https://images.unsplash.com/photo-1633354747567-e0682586f082?auto=format&fit=crop&w=1600&q=78', kicker: 'Market readiness', features: ['Human review before publication', 'Qualified enquiry capture and follow-up', 'Content updates as property status changes'] },
 ];
+
+const serviceSlides = [
+  { image: publicAsset('images/services-home-exterior.jpg'), alt: 'Contemporary residence with landscaped gardens' },
+  { image: publicAsset('images/services-home-interior.jpg'), alt: 'Refined modern residential living room' },
+  { image: publicAsset('images/services-apartments.jpg'), alt: 'Contemporary residential apartment building' },
+];
+
+const aboutSlides = [
+  { image: publicAsset('images/about-established-home.jpg'), alt: 'Established modern home in a landscaped setting' },
+  { image: publicAsset('images/about-courtyard-home.jpg'), alt: 'Contemporary courtyard residence with a pool' },
+  { image: publicAsset('images/about-home-interior.jpg'), alt: 'Bright contemporary kitchen and living space' },
+];
+
+function SilentImageSlider({ images, label }) {
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    if (images.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const timer = window.setInterval(() => setActive((current) => (current + 1) % images.length), 5000);
+    return () => window.clearInterval(timer);
+  }, [images.length]);
+  return <div className="silent-image-slider reveal" role="region" aria-label={label} aria-roledescription="carousel">{images.map((slide, index) => <img className={index === active ? 'active' : ''} src={slide.image} alt={index === active ? slide.alt : ''} aria-hidden={index !== active} loading="lazy" decoding="async" key={slide.image} />)}</div>;
+}
 
 function EditorialSlider() {
   const [active, setActive] = useState(0);
@@ -155,6 +177,7 @@ function ServicesPage({ services, navigate }) {
   return <main>
     <PageIntro eyebrow="Our services" title="Property marketing, handled with care." copy="From first brief to published campaign, we make each listing clear, attractive, and easy to act on." image={pageImages.services} />
     <section className="services-intro section"><div><p className="eyebrow">Complete listing support</p><h2>Every stage of the property story, brought together.</h2></div><p>We combine practical property information, considered visual direction, and a clear route to enquiry. Owners, landlords, agents, and developers get one organised workflow from submission to publication.</p></section>
+    <section className="page-slider-section"><SilentImageSlider images={serviceSlides} label="Housing presentation slideshow" /></section>
     <section className="service-showcases">{services.map((service, index) => { const detail = serviceDetails[index % serviceDetails.length]; return <article className="service-showcase reveal" key={service.id}><div className="service-showcase-image"><img src={detail.image} alt={`${service.title} service`} loading="lazy" decoding="async" /><span>0{index + 1}</span></div><div className="service-showcase-copy"><div className="service-icon">{serviceIcon(service.icon)}</div><p className="eyebrow">{detail.kicker}</p><h2>{service.title}</h2><p>{service.description}</p><ul>{detail.features.map((feature) => <li key={feature}><Check size={17} />{feature}</li>)}</ul></div></article>; })}</section>
     <section className="process-band"><div className="section-heading reveal"><p className="eyebrow light">Our approach</p><h2>Simple from brief to enquiry.</h2></div><div className="process-grid"><div className="reveal"><strong>01</strong><h3>Share the property</h3><p>Send the details, images, location, price, and availability.</p></div><div className="reveal"><strong>02</strong><h3>We shape the advert</h3><p>We organise the story and present the property with clarity.</p></div><div className="reveal"><strong>03</strong><h3>Reach the market</h3><p>Your campaign goes live with direct paths for serious enquiries.</p></div></div></section>
     <section className="service-assurance section"><div className="section-heading reveal"><p className="eyebrow">Built for confidence</p><h2>Clear information. Human review. Better enquiries.</h2></div><div className="assurance-grid"><article><ShieldCheck /><h3>Reviewed before publishing</h3><p>Every owner-submitted listing enters a private approval queue before it can appear publicly.</p></article><article><ImagePlus /><h3>Gallery-first presentation</h3><p>Images are arranged into responsive slideshows so visitors can explore every property properly.</p></article><article><Mail /><h3>Enquiries stay connected</h3><p>Property context and visitor contact details reach the admin inbox together for useful follow-up.</p></article></div></section>
@@ -166,7 +189,7 @@ function AboutPage({ settings, navigate }) {
   return <main>
     <PageIntro eyebrow="About us" title={settings.about_title} copy="Real Metrics Holdings helps property owners and professionals show the market what makes a place worth considering." image={pageImages.about} />
     <section className="about-page section"><div className="about-statement reveal"><p className="eyebrow">Real Metrics Holdings</p><h2>Local understanding. A sharper standard.</h2></div><div className="about-body reveal"><p>{settings.about_body}</p><p>Our work is grounded in honest information, strong visual judgement, and a smooth experience for both advertisers and property seekers.</p><Link className="text-link" to="/services" onNavigate={navigate}>Explore our approach <ArrowRight size={17} /></Link></div></section>
-    <section className="about-collage"><figure className="about-collage-large reveal"><img src="https://images.unsplash.com/photo-1719887805632-de5be825f72b?auto=format&fit=crop&w=1600&q=78" alt="Contemporary residential property" loading="lazy" decoding="async" /><figcaption>Presentation that feels considered and credible.</figcaption></figure><div><figure className="reveal"><img src="https://images.unsplash.com/photo-1660361339436-ddd4b85372da?auto=format&fit=crop&w=1000&q=78" alt="Architectural property exterior" loading="lazy" decoding="async" /></figure><figure className="reveal"><img src="https://images.unsplash.com/photo-1681949103006-70066fb25dfe?auto=format&fit=crop&w=1000&q=78" alt="Property marketing team at work" loading="lazy" decoding="async" /></figure></div></section>
+    <section className="page-slider-section"><SilentImageSlider images={aboutSlides} label="Residential property slideshow" /></section>
     <section className="about-principles section"><div><span>Botswana focused</span><p>Built around the local property market, its owners, professionals, buyers, and tenants.</p></div><div><span>Human reviewed</span><p>Every submitted listing is checked before publication to protect quality and trust.</p></div><div><span>Detail led</span><p>Strong images and accurate information work together to help people decide with confidence.</p></div></section>
     <section className="values-band"><article className="reveal"><ShieldCheck /><h3>Clear information</h3><p>Every campaign makes price, status, location, and key property details easy to understand.</p></article><article className="reveal"><Check /><h3>Considered presentation</h3><p>Photography and copy work together without overstatement or unnecessary noise.</p></article><article className="reveal"><MapPin /><h3>Botswana focused</h3><p>Our platform is shaped around the local property market and the people moving through it.</p></article></section>
     <section className="cta-band reveal"><div><p className="eyebrow light">A property worth presenting?</p><h2>Give it a clearer place in the market.</h2></div><Link className="light-button" to="/list-property" onNavigate={navigate}>Submit a property <ArrowRight size={18} /></Link></section>
@@ -224,7 +247,7 @@ function ContactPage({ settings, property }) {
 }
 
 function PrivacyPage({ settings }) {
-  return <main className="legal-page"><PageIntro eyebrow="Privacy" title="Your information, handled with care." copy="This notice explains what personal data Real Metrics Holdings collects, why we use it, and the choices available to you." image="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=2000&q=88" /><article className="legal-content section"><div className="legal-summary"><p><strong>Last updated:</strong> 27 September 2026</p><p>Real Metrics Holdings is the data controller for information collected through this website. This notice is designed around Botswana’s Data Protection Act 2024, which commenced on 14 January 2025.</p><a href={`mailto:${settings.email}`}>{settings.email}</a></div><div className="legal-sections">
+  return <main className="legal-page"><PageIntro eyebrow="Privacy" title="Your information, handled with care." copy="This notice explains what personal data Real Metrics Holdings collects, why we use it, and the choices available to you." image="https://images.unsplash.com/photo-1706808849802-8f876ade0d1f?auto=format&fit=crop&w=1920&q=78" /><article className="legal-content section"><div className="legal-summary"><p><strong>Last updated:</strong> 27 September 2026</p><p>Real Metrics Holdings is the data controller for information collected through this website. This notice is designed around Botswana’s Data Protection Act 2024, which commenced on 14 January 2025.</p><a href={`mailto:${settings.email}`}>{settings.email}</a></div><div className="legal-sections">
     <section><h2>1. Information we collect</h2><p>When you contact us or enquire about a property, we collect your name, email address, telephone number, enquiry type, message, and the property you selected. When you submit a property, we also collect your relationship to the property, listing information, images, and your confirmation that you are authorised to submit them. Our hosting and security providers may process basic technical information such as IP address, browser type, timestamps, and security logs.</p></section>
     <section><h2>2. Why we use it</h2><p>We use personal data to respond to enquiries, review and publish authorised listings, operate the admin workflow, prevent spam and abuse, maintain security, update property status, and meet legal obligations. We do not sell personal data or use it for unrelated automated profiling.</p></section>
     <section><h2>3. Legal bases</h2><p>Depending on the interaction, processing is based on your consent, steps requested before entering an agreement, performance of an agreement, compliance with legal obligations, or our legitimate interests in operating a secure property advertising service. You may withdraw consent for future processing, although lawful processing already completed remains unaffected.</p></section>
@@ -238,7 +261,7 @@ function PrivacyPage({ settings }) {
 }
 
 function TermsPage({ settings }) {
-  return <main className="legal-page"><PageIntro eyebrow="Terms of service" title="Clear terms for using this website." copy="These terms apply when you browse listings, send an enquiry, or submit a property to Real Metrics Holdings." image="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=2000&q=88" /><article className="legal-content section"><div className="legal-summary"><p><strong>Last updated:</strong> 27 September 2026</p><p>By using this website, you agree to these terms. If you do not agree, please do not submit information or use the listing services.</p><a href={`mailto:${settings.email}`}>{settings.email}</a></div><div className="legal-sections">
+  return <main className="legal-page"><PageIntro eyebrow="Terms of service" title="Clear terms for using this website." copy="These terms apply when you browse listings, send an enquiry, or submit a property to Real Metrics Holdings." image="https://images.unsplash.com/photo-1706808849780-7a04fbac83ef?auto=format&fit=crop&w=1920&q=78" /><article className="legal-content section"><div className="legal-summary"><p><strong>Last updated:</strong> 27 September 2026</p><p>By using this website, you agree to these terms. If you do not agree, please do not submit information or use the listing services.</p><a href={`mailto:${settings.email}`}>{settings.email}</a></div><div className="legal-sections">
     <section><h2>1. The service</h2><p>Real Metrics Holdings provides property advertising, presentation, and enquiry-routing services. We are not, merely by displaying a listing, the owner, seller, landlord, estate agent, valuer, lender, conveyancer, or legal adviser for that property unless a separate written agreement expressly says otherwise.</p></section>
     <section><h2>2. Listing information</h2><p>Property information may be supplied by owners, landlords, agents, developers, or authorised representatives. We review submissions for presentation and apparent completeness, but users must independently verify ownership, availability, measurements, condition, pricing, permissions, and all material facts before relying on a listing or entering a transaction.</p></section>
     <section><h2>3. Your submissions</h2><p>You confirm that submitted information is accurate, current, lawful, and not misleading; that you are at least 18; and that you have authority to provide the property details and images. You grant us a non-exclusive, royalty-free licence to host, format, reproduce, and display approved submission content for advertising the property. You retain ownership of your content.</p></section>
