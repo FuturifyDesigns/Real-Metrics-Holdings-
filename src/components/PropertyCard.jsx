@@ -8,6 +8,10 @@ export function PropertyCard({ property, contactHref = '/contact', detailHref, o
   const [paused, setPaused] = useState(false);
   const hasImages = Boolean(property.images?.length);
   const images = hasImages ? property.images : [`${import.meta.env.BASE_URL}real-metrics-logo-transparent.png`];
+  const hasBeds = Number(property.beds) > 0;
+  const hasBaths = Number(property.baths) > 0;
+  const hasSize = Boolean(String(property.size || '').trim());
+  const hasMeta = hasBeds || hasBaths || hasSize;
 
   useEffect(() => {
     setImageIndex(0);
@@ -54,11 +58,11 @@ export function PropertyCard({ property, contactHref = '/contact', detailHref, o
           <p className="location"><MapPin size={15} />{property.location}</p>
         </div>
         <p className="property-description">{property.description}</p>
-        <div className="property-meta">
-          <span><BedDouble size={16} />{property.beds || 'Studio'}</span>
-          <span><Bath size={16} />{property.baths}</span>
-          <span><Ruler size={16} />{property.size}</span>
-        </div>
+        {hasMeta && <div className="property-meta">
+          {hasBeds && <span><BedDouble size={16} />{property.beds}</span>}
+          {hasBaths && <span><Bath size={16} />{property.baths}</span>}
+          {hasSize && <span><Ruler size={16} />{property.size}</span>}
+        </div>}
         <div className="property-footer">
           <a className="property-details-button" href={detailHref} onClick={(event) => follow(event, detailHref)}>View details <ArrowRight size={16} /></a>
           <a className="property-enquire-link" href={contactHref} onClick={(event) => follow(event, contactHref)} aria-label={`Ask about ${property.title}`}>Enquire <MoveUpRight size={16} /></a>
