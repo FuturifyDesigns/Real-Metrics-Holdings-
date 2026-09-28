@@ -1,11 +1,9 @@
-import { ArrowLeft, ArrowRight, ImagePlus, Send, Trash2, UploadCloud } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Crop, ImagePlus, Send, Trash2, UploadCloud } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { ImageEditor } from './ImageEditor';
+import { ACCEPTED_PROPERTY_IMAGE_TYPES, compressPropertyImage, MAX_PROPERTY_IMAGES, MAX_SOURCE_IMAGE_BYTES } from '../lib/images';
 import { hasSupabase, supabase } from '../lib/supabase';
 import { validatePhoneInput, phoneValidationMessage } from '../lib/validation';
-
-const MAX_IMAGES = 8;
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const safeFileName = (name) => name
   .toLowerCase()
@@ -16,26 +14,44 @@ export function PropertySubmissionPage({ pageImage }) {
   const [images, setImages] = useState([]);
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [processingImages, setProcessingImages] = useState(false);
+  const [editingImage, setEditingImage] = useState(-1);
   const imagesRef = useRef(images);
 
   useEffect(() => { imagesRef.current = images; }, [images]);
   useEffect(() => () => imagesRef.current.forEach(({ preview }) => URL.revokeObjectURL(preview)), []);
 
-  const addImages = (event) => {
+  const addImages = async (event) => {
     const selected = Array.from(event.target.files || []);
     event.target.value = '';
     setMessage('');
 
-    if (images.length + selected.length > MAX_IMAGES) {
-      setMessage(`Choose no more than ${MAX_IMAGES} images in total.`);
+    if (images.length + selected.length > MAX_PROPERTY_IMAGES) {
+      setMessage(`Choose no more than ${MAX_PROPERTY_IMAGES} images in total.`);
       return;
     }
-    const invalid = selected.find((file) => !ACCEPTED_IMAGE_TYPES.includes(file.type) || file.size > MAX_IMAGE_BYTES);
+    const invalid = selected.find((file) => !ACCEPTED_PROPERTY_IMAGE_TYPES.includes(file.type) || file.size > MAX_SOURCE_IMAGE_BYTES);
     if (invalid) {
       setMessage('Each image must be a JPG, PNG, or WebP file no larger than 8 MB.');
       return;
     }
-    setImages((current) => [...current, ...selected.map((file) => ({ file, preview: URL.createObjectURL(file) }))]);
+    setProcessingImages(true);
+    try {
+      const optimised = await Promise.all(selected.map(compressPropertyImage));
+      setImages((current) => [...current, ...optimised.map((file) => ({ file, preview: URL.createObjectURL(file) }))]);
+      setMessage(`${optimised.length} image${optimised.length === 1 ? '' : 's'} optimised for fast loading.`);
+    } catch (error) {
+      setMessage(error.message || 'One or more images could not be processed.');
+    } finally { setProcessingImages(false); }
+  };
+
+  const applyImageEdit = async (blob) => {
+    const current = images[editingImage];
+    if (!current) return;
+    const file = new File([blob], current.file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp', lastModified: Date.now() });
+    URL.revokeObjectURL(current.preview);
+    setImages((items) => items.map((item, index) => index === editingImage ? { file, preview: URL.createObjectURL(file) } : item));
+    setEditingImage(-1);
   };
 
   const removeImage = (index) => setImages((current) => {
@@ -163,11 +179,12 @@ export function PropertySubmissionPage({ pageImage }) {
           <label className="wide">Property size<input name="size" maxLength="60" placeholder="e.g. 320 sqm or 2.4 hectares" /></label>
           <label className="wide">Description *<textarea name="description" rows="7" minLength="40" maxLength="2000" placeholder="Describe the condition, key features, access, parking, security, amenities and availability." required /></label>
         </div></fieldset>
-        <fieldset><legend>Property images *</legend><p className="field-help">Upload 1–8 JPG, PNG, or WebP images. Maximum 8 MB each. Use the arrows to arrange them; the first image will be the cover.</p><label className="upload-zone"><UploadCloud /><strong>Choose property images</strong><span>Clear landscape images work best</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={addImages} /></label>{images.length > 0 && <div className="image-edit-grid">{images.map((item, index) => <article key={item.preview} className="image-edit-card"><img src={item.preview} alt={`Selected property image ${index + 1}`} /><span>{index === 0 ? 'Cover image' : `Image ${index + 1}`}</span><div><button type="button" onClick={() => moveImage(index, -1)} disabled={index === 0} aria-label={`Move image ${index + 1} left`}><ArrowLeft /></button><button type="button" onClick={() => moveImage(index, 1)} disabled={index === images.length - 1} aria-label={`Move image ${index + 1} right`}><ArrowRight /></button><button type="button" onClick={() => removeImage(index)} aria-label={`Remove image ${index + 1}`}><Trash2 /></button></div></article>)}</div>}</fieldset>
+        <fieldset><legend>Property images *</legend><p className="field-help">Upload 1–20 JPG, PNG, or WebP images. Images are compressed automatically. Use Edit to crop, zoom, position, or rotate a photo; the first image will be the cover.</p><label className="upload-zone"><UploadCloud /><strong>{processingImages ? 'Optimising images…' : 'Choose property images'}</strong><span>Clear landscape images work best</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={processingImages} onChange={addImages} /></label>{images.length > 0 && <div className="image-edit-grid">{images.map((item, index) => <article key={item.preview} className="image-edit-card"><img src={item.preview} alt={`Selected property image ${index + 1}`} /><span>{index === 0 ? 'Cover image' : `Image ${index + 1}`}</span><div><button type="button" onClick={() => moveImage(index, -1)} disabled={index === 0} aria-label={`Move image ${index + 1} left`}><ArrowLeft /></button><button type="button" onClick={() => moveImage(index, 1)} disabled={index === images.length - 1} aria-label={`Move image ${index + 1} right`}><ArrowRight /></button><button type="button" onClick={() => setEditingImage(index)} aria-label={`Crop and edit image ${index + 1}`}><Crop /></button><button type="button" onClick={() => removeImage(index)} aria-label={`Remove image ${index + 1}`}><Trash2 /></button></div></article>)}</div>}</fieldset>
         <label className="consent-row"><input name="consent" type="checkbox" required /><span>I am at least 18, am authorised to submit this property, confirm the details and images are accurate, and accept the <a href={`${import.meta.env.BASE_URL}terms`} target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href={`${import.meta.env.BASE_URL}privacy`} target="_blank" rel="noopener noreferrer">Privacy Notice</a>. *</span></label>
         <button className="primary-button" type="submit" disabled={submitting}><ImagePlus size={17} />{submitting ? 'Uploading and submitting…' : 'Submit property for review'}<Send size={16} /></button>
         {message && <p className={`submission-message ${message.startsWith('Thank') ? 'success' : ''}`} role="status" aria-live="polite">{message}</p>}
       </form>
     </section>
+    {editingImage >= 0 && images[editingImage] && <ImageEditor source={images[editingImage].file} onApply={applyImageEdit} onClose={() => setEditingImage(-1)} />}
   </main>;
 }

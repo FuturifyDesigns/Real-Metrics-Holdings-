@@ -1,5 +1,7 @@
 import { ArrowDown, ArrowUp, CheckCircle2, Clock3, ExternalLink, LogOut, Mail, Pencil, Plus, Save, Trash2, Upload, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { ImageEditor } from './ImageEditor';
+import { ACCEPTED_PROPERTY_IMAGE_TYPES, compressPropertyImage, MAX_PROPERTY_IMAGES, MAX_SOURCE_IMAGE_BYTES } from '../lib/images';
 import { hasSupabase, supabase } from '../lib/supabase';
 
 const statuses = ['Available', 'For Sale', 'For Rent', 'Sold', 'Rented', 'Tenanted'];
@@ -25,6 +27,7 @@ export function Admin({ data, setData, onSave, onDelete }) {
   const [reviewImages, setReviewImages] = useState({});
   const [reviewing, setReviewing] = useState('');
   const [inquiries, setInquiries] = useState([]);
+  const [imageEditor, setImageEditor] = useState(null);
   const sortedProperties = useMemo(() => data.properties, [data.properties]);
   const pendingSubmissions = useMemo(() => submissions.filter((item) => item.status === 'pending'), [submissions]);
   const openInquiries = useMemo(() => inquiries.filter((item) => item.status !== 'resolved'), [inquiries]);
@@ -141,22 +144,51 @@ export function Admin({ data, setData, onSave, onDelete }) {
     const selected = Array.from(files || []);
     if (!selected.length) return;
     const property = data.properties.find((item) => item.id === propertyId);
-    if ((property?.images?.length || 0) + selected.length > 8) { setMessage('A property can have up to 8 images.'); return; }
-    if (selected.some((file) => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 8 * 1024 * 1024)) { setMessage('Use JPG, PNG, or WebP images no larger than 8 MB each.'); return; }
+    if ((property?.images?.length || 0) + selected.length > MAX_PROPERTY_IMAGES) { setMessage(`A property can have up to ${MAX_PROPERTY_IMAGES} images.`); return; }
+    if (selected.some((file) => !ACCEPTED_PROPERTY_IMAGE_TYPES.includes(file.type) || file.size > MAX_SOURCE_IMAGE_BYTES)) { setMessage('Use JPG, PNG, or WebP images no larger than 8 MB each.'); return; }
     setUploading(propertyId); setMessage('');
     try {
       const urls = [];
-      for (const file of selected) {
-        const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-        const path = `${propertyId}/${crypto.randomUUID()}.${extension}`;
-        const { error } = await supabase.storage.from('property-images').upload(path, file, { contentType: file.type, upsert: false });
+      for (const sourceFile of selected) {
+        const file = await compressPropertyImage(sourceFile);
+        const path = `${propertyId}/${crypto.randomUUID()}.webp`;
+        const { error } = await supabase.storage.from('property-images').upload(path, file, { contentType: 'image/webp', cacheControl: '31536000', upsert: false });
         if (error) throw error;
         urls.push(supabase.storage.from('property-images').getPublicUrl(path).data.publicUrl);
       }
       setData((current) => ({ ...current, properties: current.properties.map((item) => item.id === propertyId ? { ...item, images: [...(item.images || []), ...urls] } : item) }));
-      setMessage(`${urls.length} image${urls.length === 1 ? '' : 's'} uploaded. Save changes to publish.`);
+      setMessage(`${urls.length} compressed image${urls.length === 1 ? '' : 's'} uploaded. Save changes to publish.`);
     } catch (error) { setMessage(error.message || 'The images could not be uploaded.'); }
     finally { setUploading(''); }
+  };
+
+  const openImageEditor = (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLImageElement) || !target.closest('.admin-image-grid')) return;
+    const source = target.getAttribute('src');
+    const property = data.properties.find((item) => (item.images || []).includes(source));
+    if (!property) return;
+    setImageEditor({ propertyId: property.id, image: source, index: property.images.indexOf(source) });
+  };
+
+  const applyAdminImageEdit = async (blob) => {
+    if (!imageEditor) return;
+    setSaving(true); setMessage('');
+    try {
+      const path = `${imageEditor.propertyId}/${crypto.randomUUID()}.webp`;
+      const { error: uploadError } = await supabase.storage.from('property-images').upload(path, blob, { contentType: 'image/webp', cacheControl: '31536000', upsert: false });
+      if (uploadError) throw uploadError;
+      const replacement = supabase.storage.from('property-images').getPublicUrl(path).data.publicUrl;
+      const next = { ...data, properties: data.properties.map((property) => property.id === imageEditor.propertyId ? { ...property, images: property.images.map((image, index) => index === imageEditor.index ? replacement : image) } : property) };
+      await onSave(next);
+      const marker = '/storage/v1/object/public/property-images/';
+      if (imageEditor.image.includes(marker)) await supabase.storage.from('property-images').remove([decodeURIComponent(imageEditor.image.split(marker)[1])]);
+      setData(next);
+      setImageEditor(null);
+      setMessage('The cropped photo was compressed and published.');
+    } catch (error) {
+      setMessage(error.message || 'The edited photo could not be published.');
+    } finally { setSaving(false); }
   };
 
   const approveSubmission = async (submission) => {
@@ -168,7 +200,7 @@ export function Admin({ data, setData, onSave, onDelete }) {
         if (downloadError) throw downloadError;
         const fileName = sourcePath.split('/').pop();
         const destination = `${submission.id}/${fileName}`;
-        const { error: uploadError } = await supabase.storage.from('property-images').upload(destination, imageFile, { contentType: imageFile.type, upsert: true });
+        const { error: uploadError } = await supabase.storage.from('property-images').upload(destination, imageFile, { contentType: imageFile.type, cacheControl: '31536000', upsert: true });
         if (uploadError) throw uploadError;
         const { data: publicImage } = supabase.storage.from('property-images').getPublicUrl(destination);
         publishedImages.push(publicImage.publicUrl);
@@ -221,7 +253,7 @@ export function Admin({ data, setData, onSave, onDelete }) {
     ['inquiries', `Enquiries (${openInquiries.length})`], ['content', 'Site content'], ['services', 'Services'],
   ];
 
-  return <main className="admin-shell">
+  return <main className="admin-shell" onClickCapture={openImageEditor}>
     <section className="admin-top"><div><p className="eyebrow">Real Metrics CMS</p><h1>Admin Dashboard</h1><p>Choose one area to manage, or edit content directly on the live website.</p></div><div className="admin-actions"><a className="admin-live-button" href={`${import.meta.env.BASE_URL}?edit=1`}>Edit live site <ExternalLink size={16} /></a><button type="button" className="admin-logout" onClick={logout}><LogOut size={16} />Log out</button><button type="button" className="primary-button" onClick={save} disabled={saving}><Save size={16} />{saving ? 'Saving…' : 'Save changes'}</button></div></section>
 
     <nav className="admin-tabs" aria-label="Dashboard sections">{tabs.map(([id, label]) => <button type="button" className={activePanel === id ? 'active' : ''} onClick={() => setActivePanel(id)} key={id}>{label}</button>)}</nav>
@@ -237,6 +269,7 @@ export function Admin({ data, setData, onSave, onDelete }) {
     {activePanel === 'properties' && <section className="admin-panel"><div className="panel-heading"><div><p className="eyebrow">Listings</p><h2>Properties</h2></div><button type="button" className="primary-button" onClick={addProperty}><Plus size={16} />Add property</button></div><p className="admin-panel-intro">Open a property to edit every detail, upload and arrange gallery images, or publish it without images—the site logo will be shown automatically.</p><div className="property-admin-list">{sortedProperties.map((property, index) => { const open = editingProperty === property.id; const preview = property.images?.[0] || `${import.meta.env.BASE_URL}real-metrics-logo-transparent.png`; return <article className={`property-admin-card${open ? ' open' : ''}`} key={property.id}><header><img className={property.images?.length ? '' : 'placeholder'} src={preview} alt="" /><div><span>{property.status} · {property.category}</span><h3>{property.title}</h3><p>{property.location} · {property.price}</p><small>{property.beds || 'Studio'} beds · {property.baths || 0} baths · {property.size || 'Size not specified'} · {property.images?.length || 0} images</small></div><div className="property-admin-actions"><button type="button" disabled={index === 0 || saving} onClick={() => moveProperty(property.id, -1)} aria-label="Move property up"><ArrowUp /></button><button type="button" disabled={index === sortedProperties.length - 1 || saving} onClick={() => moveProperty(property.id, 1)} aria-label="Move property down"><ArrowDown /></button><button type="button" className="edit" disabled={saving} onClick={() => setEditingProperty(open ? '' : property.id)}><Pencil />{open ? 'Close' : 'Edit'}</button><button type="button" className="delete" disabled={saving} onClick={() => { if (window.confirm(`Delete ${property.title}? This removes it from the live website immediately.`)) removeItem('properties', property.id); }} aria-label={`Delete ${property.title}`}><Trash2 /></button></div></header>{open && <div className="property-admin-editor"><div className="admin-image-manager"><div className="admin-image-grid">{property.images?.length ? property.images.map((image, imageIndex) => <figure key={image}><img src={image} alt={`${property.title} ${imageIndex + 1}`} /><figcaption><button type="button" disabled={imageIndex === 0} onClick={() => moveImage(property.id, imageIndex, -1)} aria-label="Move image left"><ArrowUp /></button><button type="button" disabled={imageIndex === property.images.length - 1} onClick={() => moveImage(property.id, imageIndex, 1)} aria-label="Move image right"><ArrowDown /></button><button type="button" onClick={() => removeImage(property.id, image)} aria-label="Remove image"><Trash2 /></button></figcaption></figure>) : <div className="admin-no-images"><img src={`${import.meta.env.BASE_URL}real-metrics-logo-transparent.png`} alt="" /><span>No property images yet. The logo will be used on the live site.</span></div>}</div><label className="image-upload-button"><Upload size={17} />{uploading === property.id ? 'Uploading…' : 'Upload images'}<input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={uploading === property.id} onChange={(event) => { uploadImages(property.id, event.target.files); event.target.value = ''; }} /></label><small>JPG, PNG, or WebP · up to 8 images · 8 MB each</small></div><div className="admin-grid"><label>Title<input value={property.title} onChange={(e) => updateCollection('properties', property.id, 'title', e.target.value)} /></label><label>Location<input value={property.location} onChange={(e) => updateCollection('properties', property.id, 'location', e.target.value)} /></label><label>Price<input value={property.price} onChange={(e) => updateCollection('properties', property.id, 'price', e.target.value)} /></label><label>Status<select value={property.status} onChange={(e) => updateCollection('properties', property.id, 'status', e.target.value)}>{statuses.map((status) => <option key={status}>{status}</option>)}</select></label><label>Category<input value={property.category} onChange={(e) => updateCollection('properties', property.id, 'category', e.target.value)} /></label><label>Bedrooms<input type="number" min="0" value={property.beds} onChange={(e) => updateCollection('properties', property.id, 'beds', Number(e.target.value))} /></label><label>Bathrooms<input type="number" min="0" value={property.baths} onChange={(e) => updateCollection('properties', property.id, 'baths', Number(e.target.value))} /></label><label>Size<input value={property.size} onChange={(e) => updateCollection('properties', property.id, 'size', e.target.value)} /></label><label className="check-row"><input type="checkbox" checked={property.featured} onChange={(e) => updateCollection('properties', property.id, 'featured', e.target.checked)} /> Featured on homepage</label><label className="wide">Full description<textarea rows="5" value={property.description} onChange={(e) => updateCollection('properties', property.id, 'description', e.target.value)} /></label></div></div>}</article>; })}</div></section>}
 
     {activePanel === 'services' && <section className="admin-panel"><div className="panel-heading"><h2>Services</h2><button type="button" className="primary-button" onClick={() => addItem('services', blankService())}><Plus size={16} />Add service</button></div><div className="cms-editor-list">{data.services.map((service) => <article className="property-editor" key={service.id}><div className="editor-heading"><strong>{service.title}</strong><button type="button" aria-label="Delete service" onClick={() => removeItem('services', service.id)}><Trash2 size={16} /></button></div><div className="admin-grid"><label>Title<input value={service.title} onChange={(e) => updateCollection('services', service.id, 'title', e.target.value)} /></label><label>Icon<select value={service.icon} onChange={(e) => updateCollection('services', service.id, 'icon', e.target.value)}><option value="megaphone">Megaphone</option><option value="layout">Building</option><option value="chart">Chart</option></select></label><label className="wide">Description<textarea value={service.description} onChange={(e) => updateCollection('services', service.id, 'description', e.target.value)} /></label></div></article>)}</div></section>}
+    {imageEditor && <ImageEditor source={imageEditor.image} onApply={applyAdminImageEdit} onClose={() => setImageEditor(null)} />}
     {message && <div className="toast">{message}</div>}
   </main>;
 }

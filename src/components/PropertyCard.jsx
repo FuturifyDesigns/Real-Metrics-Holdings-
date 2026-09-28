@@ -34,7 +34,7 @@ export function PropertyCard({ property, contactHref = '/contact', detailHref, o
     <article className={`property-card reveal${property.featured ? ' featured-card' : ''}`} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false); }}>
       {editMode && <button className="live-edit-button property-live-edit" type="button" onClick={() => onEdit?.({ type: 'property', id: property.id })} aria-label={`Edit ${property.title}`}><Pencil size={14} />Edit</button>}
       <div className={`property-media${hasImages ? '' : ' no-images'}`}>
-        {images.map((image, index) => <img className={index === imageIndex ? 'active' : ''} src={image} alt={index === imageIndex ? `${property.title}, gallery image ${index + 1}` : ''} aria-hidden={index !== imageIndex} loading="lazy" decoding="async" key={image} />)}
+        {images.map((image, index) => { const nearby = index === imageIndex || index === (imageIndex + 1) % images.length || index === (imageIndex - 1 + images.length) % images.length; return <img className={index === imageIndex ? 'active' : ''} src={nearby ? image : undefined} alt={index === imageIndex ? `${property.title}, gallery image ${index + 1}` : ''} aria-hidden={index !== imageIndex} loading="lazy" decoding="async" key={image} />; })}
         <a className="property-media-link" href={detailHref} onClick={(event) => follow(event, detailHref)} aria-label={`View full details for ${property.title}`} />
         <span className={statusClass(property.status)}>{property.status}</span>
         {property.featured && <span className="featured-pill">Featured</span>}
