@@ -209,9 +209,10 @@ export function Admin({ data, setData, onSave, onDelete }) {
       if (error) throw error;
       const { data: property, error: propertyError } = await supabase.from('properties').select('*').eq('id', propertyId).single();
       if (propertyError) throw propertyError;
+      const { error: cleanupError } = await supabase.storage.from('property-submissions').remove(submission.images);
       setData((current) => ({ ...current, properties: [property, ...current.properties.filter((item) => item.id !== property.id)] }));
       setSubmissions((current) => current.map((item) => item.id === submission.id ? { ...item, status: 'approved', approved_property_id: propertyId } : item));
-      setMessage(`${submission.title} approved and published.`);
+      setMessage(cleanupError ? `${submission.title} was published, but its temporary upload copies could not be cleared.` : `${submission.title} approved and published.`);
     } catch (error) { setMessage(error.message || 'Could not approve the submission.'); }
     finally { setReviewing(''); }
   };
@@ -221,8 +222,9 @@ export function Admin({ data, setData, onSave, onDelete }) {
     try {
       const { error } = await supabase.from('property_submissions').update({ status: 'rejected', reviewed_at: new Date().toISOString() }).eq('id', submission.id);
       if (error) throw error;
+      const { error: cleanupError } = await supabase.storage.from('property-submissions').remove(submission.images);
       setSubmissions((current) => current.map((item) => item.id === submission.id ? { ...item, status: 'rejected' } : item));
-      setMessage(`${submission.title} was rejected.`);
+      setMessage(cleanupError ? `${submission.title} was rejected, but its temporary image files could not be cleared.` : `${submission.title} was rejected and its temporary images were removed.`);
     } catch (error) { setMessage(error.message || 'Could not reject the submission.'); }
     finally { setReviewing(''); }
   };

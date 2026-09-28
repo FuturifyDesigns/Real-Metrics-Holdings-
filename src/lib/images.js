@@ -16,10 +16,19 @@ const encodeCanvas = (canvas, quality) => new Promise((resolve, reject) => {
 
 const canvasBlob = async (canvas, initialQuality = 0.8) => {
   let quality = initialQuality;
-  let blob = await encodeCanvas(canvas, quality);
+  let workingCanvas = canvas;
+  let blob = await encodeCanvas(workingCanvas, quality);
   while (blob.size > 650 * 1024 && quality > 0.56) {
     quality = Number((quality - 0.06).toFixed(2));
-    blob = await encodeCanvas(canvas, quality);
+    blob = await encodeCanvas(workingCanvas, quality);
+  }
+  while (blob.size > 650 * 1024 && workingCanvas.width > 640) {
+    const smaller = document.createElement('canvas');
+    smaller.width = Math.max(640, Math.round(workingCanvas.width * 0.82));
+    smaller.height = Math.max(1, Math.round(workingCanvas.height * 0.82));
+    smaller.getContext('2d', { alpha: false }).drawImage(workingCanvas, 0, 0, smaller.width, smaller.height);
+    workingCanvas = smaller;
+    blob = await encodeCanvas(workingCanvas, 0.56);
   }
   return blob;
 };
