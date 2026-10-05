@@ -15,6 +15,7 @@ import './styles.css';
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const publicAsset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
 const siteUrl = 'https://realmetricsholdings.com';
+const notificationEmail = 'info@realmetricsholdings.com';
 const seoPages = {
   '/': { title: 'Real Metrics Holdings | Property Advertising in Botswana', description: 'Real Metrics Holdings provides professional property advertising and listings in Botswana, alongside food products and GeoHub geoscience consulting services.' },
   '/properties': { title: 'Properties for Sale and Rent | Real Metrics Holdings', description: 'Explore professionally presented residential, rental, and commercial property listings in Botswana.' },
@@ -292,7 +293,7 @@ function ProductEnquiryPage({ settings, navigate }) {
       setFormMessage('Your product enquiry has been saved. Your email application is opening with the details ready to send.');
       const subject = encodeURIComponent(`Food product enquiry: ${product} from ${name}`);
       const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\nPhone: ${phone}\n\n${message}`);
-      window.location.href = `mailto:${settings.email}?subject=${subject}&body=${body}`;
+      window.location.href = `mailto:${notificationEmail}?subject=${subject}&body=${body}`;
       formElement.reset();
     } catch (error) {
       setFormMessage(error.message || 'We could not save your enquiry. Please try again.');
@@ -342,7 +343,7 @@ function ContactPage({ settings, property, editMode = false, onEdit }) {
       setFormMessage('Your enquiry has been saved. Your email application is opening with the details ready to send.');
       const subject = encodeURIComponent(`${inquiry.inquiry_type}${property ? `: ${property.title}` : ''} from ${inquiry.name}`);
       const body = encodeURIComponent(`Name: ${inquiry.name}\nEmail: ${inquiry.email}\nPhone: ${inquiry.phone}\nInquiry: ${inquiry.inquiry_type}${propertySummary ? `\n\nProperty details:\n${propertySummary}${propertyImage ? `\nProperty image: ${propertyImage}` : ''}` : ''}\n\nMessage:\n${inquiry.message}`);
-      window.location.href = `mailto:${settings.email}?subject=${subject}&body=${body}`;
+      window.location.href = `mailto:${notificationEmail}?subject=${subject}&body=${body}`;
       formElement.reset();
     } catch (error) {
       setFormMessage(error.message || 'We could not save your enquiry. Please try again.');

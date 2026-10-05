@@ -5,6 +5,8 @@ import { ACCEPTED_PROPERTY_IMAGE_TYPES, compressPropertyImage, MAX_PROPERTY_IMAG
 import { hasSupabase, supabase } from '../lib/supabase';
 import { validatePhoneInput, phoneValidationMessage } from '../lib/validation';
 
+const notificationEmail = 'info@realmetricsholdings.com';
+
 const safeFileName = (name) => name
   .toLowerCase()
   .replace(/[^a-z0-9._-]+/g, '-')
@@ -149,7 +151,10 @@ export function PropertySubmissionPage({ pageImage }) {
       images.forEach(({ preview }) => URL.revokeObjectURL(preview));
       setImages([]);
       formElement.reset();
-      setMessage('Thank you. Your property has been sent to the Real Metrics team for review.');
+      setMessage('Thank you. Your property has been sent to the Real Metrics team for review. Your email application is opening with the details ready to send.');
+      const subject = encodeURIComponent(`Property submission: ${payload.title}`);
+      const body = encodeURIComponent(`New property submission\n\nSubmitted by: ${payload.owner_name}\nEmail: ${payload.owner_email}\nPhone: ${payload.owner_phone}\nRelationship: ${payload.relationship}\n\nListing type: ${payload.listing_type}\nCategory: ${payload.category}\nTitle: ${payload.title}\nLocation: ${payload.location}\nPrice: ${payload.price}\nBedrooms: ${payload.bedrooms || 'Not supplied'}\nBathrooms: ${payload.bathrooms || 'Not supplied'}\nSize: ${payload.size || 'Not supplied'}\nImages uploaded: ${payload.images.length}\nSubmission ID: ${payload.id}\n\nDescription:\n${payload.description}`);
+      window.location.href = `mailto:${notificationEmail}?subject=${subject}&body=${body}`;
     } catch (error) {
       setMessage(error.message || 'We could not submit your property. Please try again.');
     } finally {
