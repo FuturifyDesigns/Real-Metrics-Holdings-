@@ -8,7 +8,7 @@ create table if not exists public.site_settings (
   hero_subtitle text not null default 'Premium campaigns, polished listing showcases, and market-ready property presentation for sellers, landlords, agents, and developers.',
   email text not null default 'info@realmetricsholdings.com',
   phone text not null default '+267 72 633 424',
-  address text default 'Gaborone, Botswana',
+  address text default '10102 Mafulo House, next to Old Prison Headquarters, Taung Broadhurst, Gaborone, Botswana, Office 6',
   about_title text not null default 'Property presentation with a local point of view.',
   about_body text not null default 'We started Real Metrics Holdings to give Botswana property a more considered place in the market. Each listing is shaped to feel clear, credible, and worth someone''s time.',
   contact_intro text not null default 'Whether you are selling, letting, or launching a development, tell us what you need to bring to market.',
