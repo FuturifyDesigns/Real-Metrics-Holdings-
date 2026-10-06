@@ -34,12 +34,6 @@ const writeLocal = (data) => {
 
 const ordered = (items) => [...items].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
-const cleanTimestamp = (value) => {
-  if (!value) return undefined;
-  const timestamp = new Date(value);
-  return Number.isNaN(timestamp.getTime()) ? undefined : timestamp.toISOString();
-};
-
 export async function loadCmsData() {
   if (!hasSupabase) return readLocal();
 
@@ -78,11 +72,10 @@ export async function saveCmsData(data) {
   const upsertCollection = async (table, collection) => {
     const now = new Date().toISOString();
     const payload = collection.map((item, index) => {
-      const { created_at: rawCreatedAt, updated_at: _rawUpdatedAt, ...rest } = item;
+      const { created_at: _rawCreatedAt, updated_at: _rawUpdatedAt, ...rest } = item;
       return {
         ...rest,
         ...(table === tables.properties ? { sort_order: index } : {}),
-        ...(table === tables.properties && cleanTimestamp(rawCreatedAt) ? { created_at: cleanTimestamp(rawCreatedAt) } : {}),
         updated_at: now,
       };
     });
